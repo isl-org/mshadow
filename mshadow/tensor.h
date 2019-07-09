@@ -613,8 +613,9 @@ struct Tensor<Device, 1, DType>
 /*!
  * \brief initialize tensor engine, used to call intialization functions of
  * dependent libs this function should be called before all GPU tensor
- * operations, for using tensors in CPU, this call is actually not needed \param
- * device_id GPU device id to be choosed \tparam Device the device type
+ * operations, for using tensors in CPU, this call is actually not needed
+ * \param device_id GPU device id to be choosed
+ * \tparam Device the device type
  */
 template <typename Device>
 inline void InitTensorEngine(int device_id = 0);
