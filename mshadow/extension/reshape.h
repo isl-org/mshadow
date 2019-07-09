@@ -17,17 +17,16 @@ namespace expr {
  * \tparam dimdst target dimension
  * \tparam dimsrc source dimension
  */
-template<typename SrcExp, typename DType, int dimdst, int dimsrc>
-struct ReshapeExp:
-      public MakeTensorExp<ReshapeExp<SrcExp, DType, dimdst, dimsrc>,
-                           SrcExp, dimdst, DType> {
+template <typename SrcExp, typename DType, int dimdst, int dimsrc>
+struct ReshapeExp
+    : public MakeTensorExp<ReshapeExp<SrcExp, DType, dimdst, dimsrc>, SrcExp,
+                           dimdst, DType> {
   /*! \brief source expression */
   const SrcExp &src_;
   /*! \brief smallest dimension of input */
   index_t ishapex_;
   /*! \brief constructor */
-  ReshapeExp(const SrcExp &src, Shape<dimdst> shape)
-      : src_(src) {
+  ReshapeExp(const SrcExp &src, Shape<dimdst> shape) : src_(src) {
     Shape<dimsrc> ishape = ShapeCheck<dimsrc, SrcExp>::Check(src_);
     CHECK_EQ(ishape.Size(), shape.Size()) << "reshape size must match";
     ishapex_ = ishape[dimsrc - 1];
@@ -43,21 +42,22 @@ struct ReshapeExp:
  * \tparam etype source expression type
  * \tparam dimdst target dimension
  */
-template<typename SrcExp, typename DType, int etype, int dimdst>
-inline ReshapeExp<SrcExp, DType, dimdst, ExpInfo<SrcExp>::kDim>
-reshape(const Exp<SrcExp, DType, etype> &src, Shape<dimdst> oshape) {
-  return ReshapeExp<SrcExp, DType, dimdst, ExpInfo<SrcExp>::kDim>
-      (src.self(), oshape);
+template <typename SrcExp, typename DType, int etype, int dimdst>
+inline ReshapeExp<SrcExp, DType, dimdst, ExpInfo<SrcExp>::kDim> reshape(
+    const Exp<SrcExp, DType, etype> &src, Shape<dimdst> oshape) {
+  return ReshapeExp<SrcExp, DType, dimdst, ExpInfo<SrcExp>::kDim>(src.self(),
+                                                                  oshape);
 }
 //----------------------
 // Execution plan
 //----------------------
-template<typename SrcExp, typename DType, int dimdst, int dimsrc>
+template <typename SrcExp, typename DType, int dimdst, int dimsrc>
 struct Plan<ReshapeExp<SrcExp, DType, dimdst, dimsrc>, DType> {
  public:
   explicit Plan(const ReshapeExp<SrcExp, DType, dimdst, dimsrc> &e)
       : src_(MakePlan(e.src_)),
-        oshapex_(e.shape_[dimdst - 1]), ishapex_(e.ishapex_) {}
+        oshapex_(e.shape_[dimdst - 1]),
+        ishapex_(e.ishapex_) {}
   MSHADOW_XINLINE DType Eval(index_t y, index_t x) const {
     const index_t idx = y * oshapex_ + x;
     return src_.Eval(idx / ishapex_, idx % ishapex_);
@@ -68,12 +68,11 @@ struct Plan<ReshapeExp<SrcExp, DType, dimdst, dimsrc>, DType> {
   const index_t oshapex_, ishapex_;
 };
 // special work plan for 1 dimensional data
-template<typename SrcExp, typename DType, int dimdst>
+template <typename SrcExp, typename DType, int dimdst>
 struct Plan<ReshapeExp<SrcExp, DType, dimdst, 1>, DType> {
  public:
   explicit Plan(const ReshapeExp<SrcExp, DType, dimdst, 1> &e)
-      : src_(MakePlan(e.src_)), oshapex_(e.shape_[dimdst - 1]) {
-  }
+      : src_(MakePlan(e.src_)), oshapex_(e.shape_[dimdst - 1]) {}
   MSHADOW_XINLINE DType Eval(index_t y, index_t x) const {
     return src_.Eval(0, y * oshapex_ + x);
   }

@@ -15,10 +15,9 @@ namespace expr {
  * \tparam DType the type of elements
  * \tparam srcdim dimension of src
  */
-template<typename SrcExp, typename DType, int srcdim>
-struct PaddingExp:
-      public MakeTensorExp<PaddingExp<SrcExp, DType, srcdim>,
-                           SrcExp, srcdim, DType> {
+template <typename SrcExp, typename DType, int srcdim>
+struct PaddingExp : public MakeTensorExp<PaddingExp<SrcExp, DType, srcdim>,
+                                         SrcExp, srcdim, DType> {
   /*! \brief source operand */
   const SrcExp &src_;
   /*! \brief pad size in y */
@@ -34,56 +33,53 @@ struct PaddingExp:
       : src_(src), pad_y_(pad_y), pad_x_(pad_x) {
     this->shape_ = ShapeCheck<srcdim, SrcExp>::Check(src_);
     src_height_ = this->shape_[srcdim - 2];
-    src_width_  = this->shape_[srcdim - 1];
+    src_width_ = this->shape_[srcdim - 1];
     this->shape_[srcdim - 2] += pad_y * 2;  // height
     this->shape_[srcdim - 1] += pad_x * 2;  // width
   }
 };
 /*!
- * \brief padding expression, pad a image with zeros on boundaries, padding affects shape[0], and shape[1]
- * \param src original image batches
- * \param pad padding size
- * \return expression corresponding to padded result
- * \tparam SrcExp source expression
- * \tparam DType the content data type
- * \tparam etype type of expression
+ * \brief padding expression, pad a image with zeros on boundaries, padding
+ * affects shape[0], and shape[1] \param src original image batches \param pad
+ * padding size \return expression corresponding to padded result \tparam SrcExp
+ * source expression \tparam DType the content data type \tparam etype type of
+ * expression
  */
-template<typename SrcExp, typename DType, int etype>
-inline PaddingExp<SrcExp, DType, ExpInfo<SrcExp>::kDim>
-pad(const Exp<SrcExp, DType, etype> &src, index_t pad) {
-  TypeCheckPass<ExpInfo<SrcExp>::kDim >= 2>
-      ::Error_Expression_Does_Not_Meet_Dimension_Req();
+template <typename SrcExp, typename DType, int etype>
+inline PaddingExp<SrcExp, DType, ExpInfo<SrcExp>::kDim> pad(
+    const Exp<SrcExp, DType, etype> &src, index_t pad) {
+  TypeCheckPass<ExpInfo<SrcExp>::kDim >=
+                2>::Error_Expression_Does_Not_Meet_Dimension_Req();
   return PaddingExp<SrcExp, DType, ExpInfo<SrcExp>::kDim>(src.self(), pad, pad);
 }
 /*!
- * \brief padding expression, pad a image with zeros on boundaries, padding affects shape[0], and shape[1]
- * \param src original image batches
- * \param pad_y padding size in y
- * \param pad_x padding size in x
- * \return expression corresponding to padded result
- * \tparam SrcExp source expression
- * \tparam DType the content data type
- * \tparam etype type of expression
+ * \brief padding expression, pad a image with zeros on boundaries, padding
+ * affects shape[0], and shape[1] \param src original image batches \param pad_y
+ * padding size in y \param pad_x padding size in x \return expression
+ * corresponding to padded result \tparam SrcExp source expression \tparam DType
+ * the content data type \tparam etype type of expression
  */
-template<typename SrcExp, typename DType, int etype>
-inline PaddingExp<SrcExp, DType, ExpInfo<SrcExp>::kDim>
-pad(const Exp<SrcExp, DType, etype> &src, index_t pad_y, index_t pad_x) {
-  TypeCheckPass<ExpInfo<SrcExp>::kDim >= 2>
-      ::Error_Expression_Does_Not_Meet_Dimension_Req();
-  return PaddingExp<SrcExp, DType, ExpInfo<SrcExp>::kDim>
-      (src.self(), pad_y, pad_x);
+template <typename SrcExp, typename DType, int etype>
+inline PaddingExp<SrcExp, DType, ExpInfo<SrcExp>::kDim> pad(
+    const Exp<SrcExp, DType, etype> &src, index_t pad_y, index_t pad_x) {
+  TypeCheckPass<ExpInfo<SrcExp>::kDim >=
+                2>::Error_Expression_Does_Not_Meet_Dimension_Req();
+  return PaddingExp<SrcExp, DType, ExpInfo<SrcExp>::kDim>(src.self(), pad_y,
+                                                          pad_x);
 }
 //----------------------
 // Execution plan
 //----------------------
-template<typename SrcExp, typename DType, int srcdim>
+template <typename SrcExp, typename DType, int srcdim>
 struct Plan<PaddingExp<SrcExp, DType, srcdim>, DType> {
  public:
   explicit Plan(const PaddingExp<SrcExp, DType, srcdim> &e)
       : src_(MakePlan(e.src_)),
-        pad_y_(e.pad_y_), pad_x_(e.pad_x_),
+        pad_y_(e.pad_y_),
+        pad_x_(e.pad_x_),
         new_height_(e.shape_[srcdim - 2]),
-        src_height_(e.src_height_), src_width_(e.src_width_) {}
+        src_height_(e.src_height_),
+        src_width_(e.src_width_) {}
   MSHADOW_XINLINE DType Eval(index_t i, index_t j) const {
     const index_t x = j;
     const index_t y = i % new_height_;

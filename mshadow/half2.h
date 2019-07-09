@@ -8,25 +8,26 @@
 #ifndef MSHADOW_HALF2_H_
 #define MSHADOW_HALF2_H_
 
-#if (defined(__CUDACC__) && __CUDA_ARCH__ >= 530 && MSHADOW_USE_CUDA && CUDA_VERSION >= 7050)
-  #define MSHADOW_CUDA_HALF2 1
-  #include <cuda_fp16.h>
+#if (defined(__CUDACC__) && __CUDA_ARCH__ >= 530 && MSHADOW_USE_CUDA && \
+     CUDA_VERSION >= 7050)
+#define MSHADOW_CUDA_HALF2 1
+#include <cuda_fp16.h>
 #else
-  #define MSHADOW_CUDA_HALF2 0
+#define MSHADOW_CUDA_HALF2 0
 #endif
 
-#include<math.h>
+#include <math.h>
 
 /*! \brief namespace for mshadow */
 namespace mshadow {
 /* \brief name space for host/device portable half-precision floats */
 namespace half {
 
-#define MSHADOW_HALF2_ASSIGNOP(AOP, OP)                                   \
-  template<typename T>                                                    \
-  MSHADOW_XINLINE half2_t operator AOP (const T& a) {                     \
-    return *this = half2_t(*this OP a);  /* NOLINT(*)*/                   \
-  }                                                                       \
+#define MSHADOW_HALF2_ASSIGNOP(AOP, OP)                \
+  template <typename T>                                \
+  MSHADOW_XINLINE half2_t operator AOP(const T& a) {   \
+    return *this = half2_t(*this OP a); /* NOLINT(*)*/ \
+  }
 
 class MSHADOW_ALIGNED(4) half2_t {
  public:
@@ -56,9 +57,7 @@ class MSHADOW_ALIGNED(4) half2_t {
 #endif
   }
 
-  MSHADOW_XINLINE half2_t operator+() {
-    return *this;
-  }
+  MSHADOW_XINLINE half2_t operator+() { return *this; }
 
   MSHADOW_XINLINE half2_t operator-() {
 #if MSHADOW_CUDA_HALF2
@@ -87,8 +86,9 @@ class MSHADOW_ALIGNED(4) half2_t {
 /*! \brief overloaded + operator for half2_t */
 MSHADOW_XINLINE half2_t operator+(half2_t a, half2_t b) {
 #if MSHADOW_CUDA_HALF2
-  return half2_t(__floats2half2_rn(__low2float(a.half2_) + __low2float(b.half2_),
-                                   __high2float(a.half2_) + __high2float(b.half2_)));
+  return half2_t(
+      __floats2half2_rn(__low2float(a.half2_) + __low2float(b.half2_),
+                        __high2float(a.half2_) + __high2float(b.half2_)));
 #else
   return half2_t(a.half_t2[0] + b.half_t2[0], a.half_t2[1] + b.half_t2[1]);
 #endif
@@ -96,8 +96,9 @@ MSHADOW_XINLINE half2_t operator+(half2_t a, half2_t b) {
 /*! \brief overloaded - operator for half2_t */
 MSHADOW_XINLINE half2_t operator-(half2_t a, half2_t b) {
 #if MSHADOW_CUDA_HALF2
-  return half2_t(__floats2half2_rn(__low2float(a.half2_) - __low2float(b.half2_),
-                                   __high2float(a.half2_) - __high2float(b.half2_)));
+  return half2_t(
+      __floats2half2_rn(__low2float(a.half2_) - __low2float(b.half2_),
+                        __high2float(a.half2_) - __high2float(b.half2_)));
 #else
   return half2_t(a.half_t2[0] - b.half_t2[0], a.half_t2[1] - b.half_t2[1]);
 #endif
@@ -105,8 +106,9 @@ MSHADOW_XINLINE half2_t operator-(half2_t a, half2_t b) {
 /*! \brief overloaded * operator for half2_t */
 MSHADOW_XINLINE half2_t operator*(half2_t a, half2_t b) {
 #if MSHADOW_CUDA_HALF2
-  return half2_t(__floats2half2_rn(__low2float(a.half2_) * __low2float(b.half2_),
-                                   __high2float(a.half2_) * __high2float(b.half2_)));
+  return half2_t(
+      __floats2half2_rn(__low2float(a.half2_) * __low2float(b.half2_),
+                        __high2float(a.half2_) * __high2float(b.half2_)));
 #else
   return half2_t(a.half_t2[0] * b.half_t2[0], a.half_t2[1] * b.half_t2[1]);
 #endif
@@ -114,8 +116,9 @@ MSHADOW_XINLINE half2_t operator*(half2_t a, half2_t b) {
 /*! \brief overloaded / operator for half2_t */
 MSHADOW_XINLINE half2_t operator/(half2_t a, half2_t b) {
 #if MSHADOW_CUDA_HALF2
-  return half2_t(__floats2half2_rn(__low2float(a.half2_) / __low2float(b.half2_),
-                                   __high2float(a.half2_) / __high2float(b.half2_)));
+  return half2_t(
+      __floats2half2_rn(__low2float(a.half2_) / __low2float(b.half2_),
+                        __high2float(a.half2_) / __high2float(b.half2_)));
 #else
   return half2_t(a.half_t2[0] / b.half_t2[0], a.half_t2[1] / b.half_t2[1]);
 #endif
@@ -123,10 +126,12 @@ MSHADOW_XINLINE half2_t operator/(half2_t a, half2_t b) {
 /*! \brief overloaded % operator for half2_t */
 MSHADOW_XINLINE half2_t operator%(half2_t a, half2_t b) {
 #if MSHADOW_CUDA_HALF2
-  return half2_t(__floats2half2_rn(::fmod(__low2float(a.half2_), __low2float(b.half2_)),
-                                   ::fmod(__high2float(a.half2_), __high2float(b.half2_))));
+  return half2_t(__floats2half2_rn(
+      ::fmod(__low2float(a.half2_), __low2float(b.half2_)),
+      ::fmod(__high2float(a.half2_), __high2float(b.half2_))));
 #else
-  return half2_t(::fmod(a.half_t2[0], b.half_t2[0]), ::fmod(a.half_t2[1], b.half_t2[1]));
+  return half2_t(::fmod(a.half_t2[0], b.half_t2[0]),
+                 ::fmod(a.half_t2[1], b.half_t2[1]));
 #endif
 }
 /*! \brief overloaded == operator for half2_t */

@@ -12,9 +12,9 @@
 
 #include <cstdio>
 #include <cstdlib>
+#include <stdexcept>
 #include <string>
 #include <vector>
-#include <stdexcept>
 #include "./base.h"
 
 namespace dmlc {
@@ -29,7 +29,7 @@ struct Error : public std::runtime_error {
    * \brief constructor
    * \param s the error message
    */
-  explicit Error(const std::string &s) : std::runtime_error(s) {}
+  explicit Error(const std::string& s) : std::runtime_error(s) {}
 };
 }  // namespace dmlc
 
@@ -42,17 +42,15 @@ struct Error : public std::runtime_error {
 
 namespace dmlc {
 /*! \brief taken from DMLC directly */
-inline void InitLogging(const char* argv0) {
-  google::InitGoogleLogging(argv0);
-}
+inline void InitLogging(const char* argv0) { google::InitGoogleLogging(argv0); }
 }  // namespace dmlc
 
 #else
 // use a light version of glog
 #include <assert.h>
+#include <ctime>
 #include <iostream>
 #include <sstream>
-#include <ctime>
 
 #if defined(_MSC_VER)
 #pragma warning(disable : 4722)
@@ -64,18 +62,21 @@ inline void InitLogging(const char* argv0) {
 }
 
 // Always-on checking
-#define CHECK(x)                                           \
-  if (!(x))                                                \
-    dmlc::LogMessageFatal(__FILE__, __LINE__).stream() << "Check "  \
-      "failed: " #x << ' '
+#define CHECK(x)                                                      \
+  if (!(x))                                                           \
+  dmlc::LogMessageFatal(__FILE__, __LINE__).stream() << "Check "      \
+                                                        "failed: " #x \
+                                                     << ' '
 #define CHECK_LT(x, y) CHECK((x) < (y))
 #define CHECK_GT(x, y) CHECK((x) > (y))
 #define CHECK_LE(x, y) CHECK((x) <= (y))
 #define CHECK_GE(x, y) CHECK((x) >= (y))
 #define CHECK_EQ(x, y) CHECK((x) == (y))
 #define CHECK_NE(x, y) CHECK((x) != (y))
-#define CHECK_NOTNULL(x) \
-  ((x) == NULL ? dmlc::LogMessageFatal(__FILE__, __LINE__).stream() << "Check  notnull: "  #x << ' ', (x) : (x)) // NOLINT(*)
+#define CHECK_NOTNULL(x)                                            \
+  ((x) == NULL ? dmlc::LogMessageFatal(__FILE__, __LINE__).stream() \
+                     << "Check  notnull: " #x << ' ',               \
+   (x) : (x))  // NOLINT(*)
 // Debug-only checking.
 #ifdef NDEBUG
 #define DCHECK(x) \
@@ -119,7 +120,8 @@ inline void InitLogging(const char* argv0) {
 #ifdef NDEBUG
 #define LOG_DFATAL LOG_ERROR
 #define DFATAL ERROR
-#define DLOG(severity) true ? (void)0 : dmlc::LogMessageVoidify() & LOG(severity)
+#define DLOG(severity) \
+  true ? (void)0 : dmlc::LogMessageVoidify() & LOG(severity)
 #define DLOG_IF(severity, condition) \
   (true || !(condition)) ? (void)0 : dmlc::LogMessageVoidify() & LOG(severity)
 #else
@@ -151,6 +153,7 @@ class DateLogger {
 #endif
     return buffer_;
   }
+
  private:
   char buffer_[9];
 };
@@ -200,7 +203,7 @@ class LogMessageFatal {
     log_stream_ << "[" << pretty_date_.HumanDate() << "] " << file << ":"
                 << line << ": ";
   }
-  std::ostringstream &stream() { return log_stream_; }
+  std::ostringstream& stream() { return log_stream_; }
   ~LogMessageFatal() DMLC_THROW_EXCEPTION {
     // throwing out of destructor is evil
     // hopefully we can do it here
@@ -231,4 +234,3 @@ class LogMessageVoidify {
 #endif
 #endif  // DMLC_LOGGING_H_
 #endif  // MSHADOW_LOGGING_H_
-

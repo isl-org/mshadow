@@ -2,7 +2,6 @@
 
 using namespace mshadow;
 
-
 int main() {
   InitTensorEngine<cpu>();
   InitTensorEngine<gpu>();
@@ -29,8 +28,10 @@ int main() {
     printf("batch 1 of gpu & cpu tensor are same.\n");
   }
   // sum of row
-  Tensor<cpu, 1, float> tmp_tc = NewTensor<cpu, float>(Shape1(tc[0].size(1)), 0.0f);
-  Tensor<gpu, 1, float> tmp_tg = NewTensor<gpu, float>(Shape1(tg[0].size(1)), 0.0f);
+  Tensor<cpu, 1, float> tmp_tc =
+      NewTensor<cpu, float>(Shape1(tc[0].size(1)), 0.0f);
+  Tensor<gpu, 1, float> tmp_tg =
+      NewTensor<gpu, float>(Shape1(tg[0].size(1)), 0.0f);
   printf("\n#sum_rows of batch 0:\n");
   tmp_tc = sum_rows(tc[0]);
   tmp_tg = sum_rows(tg[0]);
@@ -42,8 +43,10 @@ int main() {
   FreeSpace(&tmp_tg);
   // sumall_except_dim
   printf("\n#sumall_except_dim<0> of batch 0:\n");
-  Tensor<cpu, 1, float> red_tc = NewTensor<cpu, float>(Shape1(tc.size(0)), 0.0f);
-  Tensor<gpu, 1, float> red_tg = NewTensor<gpu, float>(Shape1(tg.size(0)), 0.0f);
+  Tensor<cpu, 1, float> red_tc =
+      NewTensor<cpu, float>(Shape1(tc.size(0)), 0.0f);
+  Tensor<gpu, 1, float> red_tg =
+      NewTensor<gpu, float>(Shape1(tg.size(0)), 0.0f);
   red_tc = sumall_except_dim<0>(tc);
   red_tg = sumall_except_dim<0>(tg);
   Print1DTensor(red_tc);
@@ -71,7 +74,7 @@ int main() {
   FreeSpace(&sm_tc);
   FreeSpace(&sm_tg);
   // reshape
-  
+
   FreeSpace(&tc);
   FreeSpace(&tg);
   ShutdownTensorEngine<cpu>();

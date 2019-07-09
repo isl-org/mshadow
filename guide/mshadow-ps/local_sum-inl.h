@@ -1,9 +1,9 @@
 // This is an example demonstrating the usage of mshadow ps
 #include <cstdio>
 // use openmp to launch multiple threads
-#include <omp.h>
-#include <mshadow/tensor.h>
 #include <mshadow-ps/mshadow_ps.h>
+#include <mshadow/tensor.h>
+#include <omp.h>
 
 // simple util to print result
 void Print_(mshadow::Tensor<mshadow::cpu, 2, float> ts) {
@@ -14,7 +14,7 @@ void Print_(mshadow::Tensor<mshadow::cpu, 2, float> ts) {
     printf("\n");
   }
 }
-template<typename xpu>
+template <typename xpu>
 inline void Print(mshadow::Tensor<xpu, 2, float> ts) {
   mshadow::TensorContainer<mshadow::cpu, 2, float> tmp;
   tmp.Resize(ts.shape_);
@@ -23,12 +23,12 @@ inline void Print(mshadow::Tensor<xpu, 2, float> ts) {
 }
 
 // this function is runed by specific thread
-template<typename xpu>
+template <typename xpu>
 inline void RunWorkerThread(int devid,
                             mshadow::ps::ISharedModel<xpu, float> *ps) {
   // initialize tensor engine
   mshadow::InitTensorEngine<xpu>(devid);
-  mshadow::Stream<xpu> *stream  = mshadow::NewStream<xpu>(devid);
+  mshadow::Stream<xpu> *stream = mshadow::NewStream<xpu>(devid);
   // allocate tensor on xpu
   mshadow::TensorContainer<xpu, 2> data(mshadow::Shape2(2, 3));
   // set the computation stream to the new allocated stream
@@ -76,19 +76,20 @@ namespace ps {
 // model updater is used when update is happening on server side
 // if we only use parameter server for sum aggregation
 // this is not needed, but we must declare this function to return NULL
-template<>
+template <>
 IModelUpdater<float> *CreateModelUpdater(void) {
   return NULL;
 }
-}
-}
+}  // namespace ps
+}  // namespace mshadow
 
-template<typename xpu>
+template <typename xpu>
 inline int Run(int argc, char *argv[]) {
   if (argc < 2) {
-    printf("Usage: device list\n"\
-           "\tfor CPU the device list can be arbitrary\n"\
-           "\tfor GPU the device list need to be actual device index\n");
+    printf(
+        "Usage: device list\n"
+        "\tfor CPU the device list can be arbitrary\n"
+        "\tfor GPU the device list need to be actual device index\n");
     return 0;
   }
 #if MSHADOW_RABIT_PS
@@ -101,12 +102,12 @@ inline int Run(int argc, char *argv[]) {
     // record the device id
     devs.push_back(atoi(argv[i]));
   }
-  mshadow::ps::ISharedModel<xpu, float>
-      *ps = mshadow::ps::CreateSharedModel<xpu, float>("local");
+  mshadow::ps::ISharedModel<xpu, float> *ps =
+      mshadow::ps::CreateSharedModel<xpu, float>("local");
   // intiaialize the ps
   ps->Init(devs);
-  // use openmp to launch #devs threads
-  #pragma omp parallel num_threads(devs.size())
+// use openmp to launch #devs threads
+#pragma omp parallel num_threads(devs.size())
   {
     int tid = omp_get_thread_num();
     RunWorkerThread<xpu>(devs[tid], ps);

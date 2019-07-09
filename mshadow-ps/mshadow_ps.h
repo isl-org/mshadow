@@ -34,18 +34,17 @@ namespace ps {
  * \tparam xpu the device of the data lies
  * \tparam DType the type of element in the tensor
  */
-template<typename xpu,
-         typename DType MSHADOW_DEFAULT_DTYPE>
+template <typename xpu, typename DType MSHADOW_DEFAULT_DTYPE>
 class ISharedModel {
  public:
   /*!
    * \brief callback function that will be executed when pull request finishes
    *        before calling the callback, the thread context is already switched
    *        to the device of pullrequest
-   * \param stream the stream of callback thread, it is recommended to operate using this stream
-   * \param arg the argument of callback function
+   * \param stream the stream of callback thread, it is recommended to operate
+   * using this stream \param arg the argument of callback function
    */
-  typedef void (CallbackFunction) (Stream<xpu> *stream, void *arg);
+  typedef void(CallbackFunction)(Stream<xpu> *stream, void *arg);
   /*! \brief virtual destructor */
   virtual ~ISharedModel(void) {}
   /*!
@@ -78,9 +77,8 @@ class ISharedModel {
    *        this is unique per device
    * \param devid the device id this tensor lies in
    */
-  template<int dim>
-  inline void InitKey(Shape<dim> shape,
-                      int key, int devid) {
+  template <int dim>
+  inline void InitKey(Shape<dim> shape, int key, int devid) {
     this->InitKey_(shape.FlatTo2D(), key, devid);
   }
   /*!
@@ -99,10 +97,8 @@ class ISharedModel {
    *        this is unique per device
    * \param devid the device id this tensor lies in
    */
-  template<int dim>
-  inline void CheckWeight(Tensor<xpu, dim, DType> data,
-                          int key,
-                          int devid) {
+  template <int dim>
+  inline void CheckWeight(Tensor<xpu, dim, DType> data, int key, int devid) {
     this->CheckWeight_(data.FlatTo2D(), key, devid);
   }
   /*!
@@ -116,10 +112,8 @@ class ISharedModel {
    * \param priority the priority of this operation,
    *   the bigger the number is the higher the priority will be
    */
-  template<int dim>
-  inline void Push(Tensor<xpu, dim, DType> data,
-                   int key,
-                   int devid,
+  template <int dim>
+  inline void Push(Tensor<xpu, dim, DType> data, int key, int devid,
                    int priority = 0) {
     this->Push_(data.FlatTo2D(), key, devid, priority);
   }
@@ -138,15 +132,12 @@ class ISharedModel {
    *                 be invoked when the request finishes
    * \param callback_arg the argument to pass to callback
    */
-  template<int dim>
-  inline void PullReq(Tensor<xpu, dim, DType> data,
-                      int key,
-                      int devid,
-                      int priority = 0,
-                      CallbackFunction callback = NULL,
+  template <int dim>
+  inline void PullReq(Tensor<xpu, dim, DType> data, int key, int devid,
+                      int priority = 0, CallbackFunction callback = NULL,
                       void *callback_arg = NULL) {
-    this->PullReq_(data.FlatTo2D(), key,
-                   devid, priority, callback, callback_arg);
+    this->PullReq_(data.FlatTo2D(), key, devid, priority, callback,
+                   callback_arg);
   }
 #if __cplusplus >= 201103L
   /*!
@@ -162,14 +153,12 @@ class ISharedModel {
    *   the bigger the number is the higher the priority will be
    * \param callback the callback function
    */
-  template<int dim>
-  inline void PullReq(Tensor<xpu, dim, DType> data,
-                      int key,
-                      int devid,
+  template <int dim>
+  inline void PullReq(Tensor<xpu, dim, DType> data, int key, int devid,
                       int priority,
                       std::function<void(Stream<xpu> *stream)> callback) {
     // need to allocate space, because callback can happen latter..
-    auto calbk = new std::function<void(Stream<xpu> *stream)>();
+    auto calbk = new std::function<void(Stream<xpu> * stream)>();
     *calbk = callback;
     this->PullReq(data, key, devid, priority, InvokeLambda_, calbk);
   }
@@ -184,9 +173,7 @@ class ISharedModel {
    *        this is unique per device
    * \param devid the device id this tensor lies in
    */
-  virtual void SetWeight_(Tensor<xpu, 2, DType> data,
-                          int key,
-                          int devid) = 0;
+  virtual void SetWeight_(Tensor<xpu, 2, DType> data, int key, int devid) = 0;
   /*!
    * \brief check if the weight matches the server side
    *   this is a debug function that was not necessarily
@@ -196,9 +183,7 @@ class ISharedModel {
    *        this is unique per device
    * \param devid the device id this tensor lies in
    */
-  virtual void CheckWeight_(Tensor<xpu, 2, DType> data,
-                            int key,
-                            int devid) = 0;
+  virtual void CheckWeight_(Tensor<xpu, 2, DType> data, int key, int devid) = 0;
 
  protected:
   /*!
@@ -208,8 +193,7 @@ class ISharedModel {
    *        this is unique per device
    * \param devid the device id this tensor lies in
    */
-  virtual void InitKey_(Shape<2> shape,
-                        int key, int devid) = 0;
+  virtual void InitKey_(Shape<2> shape, int key, int devid) = 0;
   /*!
    * \brief push out a tensor to parameter server
    *  this call is asynchronize and returns immediately
@@ -221,9 +205,7 @@ class ISharedModel {
    * \param priority the priority of this operation,
    *   the bigger the number is the higher the priority will be
    */
-  virtual void Push_(Tensor<xpu, 2, DType> data,
-                     int key,
-                     int devid,
+  virtual void Push_(Tensor<xpu, 2, DType> data, int key, int devid,
                      int priority = 0) = 0;
   /*!
    * \brief send a pull request, to pull parameter into data
@@ -240,11 +222,8 @@ class ISharedModel {
    *                 be invoked when the request finishes
    * \param callback_arg the argument to pass to callback
    */
-  virtual void PullReq_(Tensor<xpu, 2, DType> data,
-                        int key,
-                        int devid,
-                        int priority,
-                        CallbackFunction callback,
+  virtual void PullReq_(Tensor<xpu, 2, DType> data, int key, int devid,
+                        int priority, CallbackFunction callback,
                         void *callback_arg) = 0;
 
  private:
@@ -252,14 +231,14 @@ class ISharedModel {
 #if __cplusplus >= 201103L
   /*! \brief hack function to convert lambda to callback function */
   inline static void InvokeLambda_(Stream<xpu> *stream, void *fun) {
-    auto *fp = static_cast<std::function<void(Stream<xpu> *stream)>*>(fun);
+    auto *fp = static_cast<std::function<void(Stream<xpu> * stream)> *>(fun);
     (*fp)(stream);
     delete fp;
   }
 #endif  // C++11
 };
 /*! \brief interface for customized mshadow server */
-template<typename DType>
+template <typename DType>
 class IModelUpdater {
  public:
   virtual ~IModelUpdater(void) {}
@@ -320,13 +299,13 @@ class IModelUpdater {
  * this is a server defined by user
  * \return new server
  */
-template<typename DType>
+template <typename DType>
 IModelUpdater<DType> *CreateModelUpdater(void);
 }  // namespace ps
 }  // namespace mshadow
 
-#include "./ps_local-inl.h"
 #include "./ps_dist-inl.h"
+#include "./ps_local-inl.h"
 #include "./ps_rabit-inl.h"
 namespace mshadow {
 namespace ps {
@@ -336,7 +315,7 @@ namespace ps {
  *     can either be "local" or "dist"
  * \return the ISharedModel that can be used to synchronize weights
  */
-template<typename xpu, typename DType>
+template <typename xpu, typename DType>
 inline ISharedModel<xpu, DType> *CreateSharedModel(const char *type) {
   if (!strcmp("local", type)) {
 #if MSHADOW_RABIT_PS

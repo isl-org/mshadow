@@ -5,7 +5,6 @@ int CreateServerNode(int argc, char *argv[]) {
   return 0;
 }
 
-
 int WorkerNodeMain(int argc, char *argv[]) {
   return Run<mshadow::cpu>(argc, argv);
 }

@@ -2,12 +2,12 @@
 // this implementation uses mshadow-ps to get gradient aggregation
 // between cards
 // this code is modified from nnet.cu
-#include <vector>
-#include <cmath>
 #include <omp.h>
+#include <cmath>
+#include <vector>
 // header file to use mshadow
-#include <mshadow/tensor.h>
 #include <mshadow-ps/mshadow_ps.h>
+#include <mshadow/tensor.h>
 // helper function to load mnist dataset
 #include "./util.h"
 // this namespace contains all data structures, functions
@@ -22,12 +22,13 @@ struct sigmoid {
   }
 };
 
-/*! \brief interface for nnet, interfacd allows use to use GPU/CPU implementation in a unified way */
-class INNet{
+/*! \brief interface for nnet, interfacd allows use to use GPU/CPU
+ * implementation in a unified way */
+class INNet {
  public:
-  virtual void Forward(const Tensor<cpu, 2, real_t>& inbatch,
+  virtual void Forward(const Tensor<cpu, 2, real_t> &inbatch,
                        Tensor<cpu, 2, real_t> &oubatch) = 0;
-  virtual void Backprop(const Tensor<cpu, 2, real_t>& gradout) = 0;
+  virtual void Backprop(const Tensor<cpu, 2, real_t> &gradout) = 0;
   virtual ~INNet() {}
 };
 
@@ -35,12 +36,12 @@ class INNet{
  * \brief simple two layer neural net
  *        this implementation is device invariant
  */
-template<typename xpu>
+template <typename xpu>
 class NNet : public INNet {
  public:
   // initialize the network
-  NNet(int batch_size, int num_in, int num_hidden, int num_out,
-       int devid, mshadow::ps::ISharedModel<xpu, real_t> *ps)
+  NNet(int batch_size, int num_in, int num_hidden, int num_out, int devid,
+       mshadow::ps::ISharedModel<xpu, real_t> *ps)
       : rnd(0), devid(devid), ps(ps) {
     mshadow::SetDevice<xpu>(devid);
     stream = mshadow::NewStream<xpu>();
@@ -64,12 +65,17 @@ class NNet : public INNet {
     nhiddenbak.Resize(nhidden.shape_);
     nout.Resize(Shape2(batch_size, num_out));
     // setup bias
-    hbias.Resize(Shape1(num_hidden)); g_hbias.Resize(hbias.shape_);
-    obias.Resize(Shape1(num_out)); g_obias.Resize(obias.shape_);
-    hbias = 0.0f; obias = 0.0f;
+    hbias.Resize(Shape1(num_hidden));
+    g_hbias.Resize(hbias.shape_);
+    obias.Resize(Shape1(num_out));
+    g_obias.Resize(obias.shape_);
+    hbias = 0.0f;
+    obias = 0.0f;
     // setup weights
-    Wi2h.Resize(Shape2(num_in, num_hidden));  g_Wi2h.Resize(Wi2h.shape_);
-    Wh2o.Resize(Shape2(num_hidden, num_out)); g_Wh2o.Resize(Wh2o.shape_);
+    Wi2h.Resize(Shape2(num_in, num_hidden));
+    g_Wi2h.Resize(Wi2h.shape_);
+    Wh2o.Resize(Shape2(num_hidden, num_out));
+    g_Wh2o.Resize(Wh2o.shape_);
     rnd.SampleGaussian(&Wi2h, 0, 0.01f);
     rnd.SampleGaussian(&Wh2o, 0, 0.01f);
     // initialize the key
@@ -95,7 +101,7 @@ class NNet : public INNet {
     nhidden = dot(ninput, Wi2h);
     // wait the pull request on hbias to complete
     ps->PullWait(1, devid);
-    nhidden+= repmat(hbias, batch_size);
+    nhidden += repmat(hbias, batch_size);
     // activation, sigmloid, backup activation in nhidden
     nhidden = F<sigmoid>(nhidden);
     Copy(nhiddenbak, nhidden, stream);
@@ -125,7 +131,7 @@ class NNet : public INNet {
     nhiddenbak = dot(nout, Wh2o.T());
     this->SyncProc(Wh2o, g_Wh2o, 2);
     // calculate gradient of sigmoid layer
-    nhidden = nhidden * (1.0f-nhidden) * nhiddenbak;
+    nhidden = nhidden * (1.0f - nhidden) * nhiddenbak;
     // calc grad of layer 1
     g_hbias = sum_rows(nhidden);
     this->SyncProc(hbias, g_hbias, 1);
@@ -133,15 +139,13 @@ class NNet : public INNet {
     this->SyncProc(Wi2h, g_Wi2h, 0);
   }
   // synchronization function
-  template<int dim>
+  template <int dim>
   inline void SyncProc(mshadow::Tensor<xpu, dim> weight,
-                       mshadow::Tensor<xpu, dim> grad,
-                       int data_key) {
+                       mshadow::Tensor<xpu, dim> grad, int data_key) {
     // wait till last computation finishes
     stream->Wait();
     ps->Push(grad, data_key, devid, -data_key);
-    ps->PullReq(grad, data_key, devid, -data_key,
-                UpdateEntry::ApplyUpdate,
+    ps->PullReq(grad, data_key, devid, -data_key, UpdateEntry::ApplyUpdate,
                 new UpdateEntry(weight.FlatTo2D(), grad.FlatTo2D(), dim == 1));
   }
   // data structure defined to help using callback function
@@ -150,11 +154,9 @@ class NNet : public INNet {
     mshadow::Tensor<xpu, 2> grad;
     bool is_bias;
     // constructor
-    UpdateEntry(mshadow::Tensor<xpu, 2> weight,
-                mshadow::Tensor<xpu, 2> grad,
+    UpdateEntry(mshadow::Tensor<xpu, 2> weight, mshadow::Tensor<xpu, 2> grad,
                 bool is_bias)
-        : weight(weight), grad(grad),
-          is_bias(is_bias) {}
+        : weight(weight), grad(grad), is_bias(is_bias) {}
     inline void Update(mshadow::Stream<xpu> *stream) {
       weight.set_stream(stream);
       const float wd = 0.00001;
@@ -167,7 +169,7 @@ class NNet : public INNet {
     }
     // callback function to apply update
     inline static void ApplyUpdate(mshadow::Stream<xpu> *stream, void *arg) {
-      UpdateEntry *e = static_cast<UpdateEntry*>(arg);
+      UpdateEntry *e = static_cast<UpdateEntry *>(arg);
       e->Update(stream);
       delete e;
     }
@@ -193,8 +195,8 @@ class NNet : public INNet {
 // helper function to get the max inde
 inline int MaxIndex(Tensor<cpu, 1, real_t> pred) {
   int maxidx = 0;
-  for(index_t i = 1; i < pred.size(0); ++i) {
-    if(pred[i] > pred[maxidx]) maxidx = (int)i;
+  for (index_t i = 1; i < pred.size(0); ++i) {
+    if (pred[i] > pred[maxidx]) maxidx = (int)i;
   }
   return maxidx;
 }
@@ -204,14 +206,14 @@ namespace ps {
 // model updater is used when update is happening on server side
 // if we only use parameter server for sum aggregation
 // this is not needed, but we must declare this function to return NULL
-template<>
+template <>
 IModelUpdater<float> *CreateModelUpdater(void) {
   return NULL;
 }
-}
-}
+}  // namespace ps
+}  // namespace mshadow
 
-template<typename xpu>
+template <typename xpu>
 inline int Run(int argc, char *argv[]) {
   srand(0);
   // settings
@@ -221,7 +223,8 @@ inline int Run(int argc, char *argv[]) {
   int num_out = 10;
   int ndev = argc - 2;
   if (batch_size % ndev != 0) {
-    fprintf(stderr, "choose number of devices ndev such that 100 MOD ndev == 0\n");
+    fprintf(stderr,
+            "choose number of devices ndev such that 100 MOD ndev == 0\n");
     return 0;
   }
   // choose which version to use
@@ -229,29 +232,32 @@ inline int Run(int argc, char *argv[]) {
   for (int i = 2; i < argc; ++i) {
     devs.push_back(atoi(argv[i]));
   }
-  mshadow::ps::ISharedModel<xpu, real_t>
-      *ps = mshadow::ps::CreateSharedModel<xpu, real_t>("local");
+  mshadow::ps::ISharedModel<xpu, real_t> *ps =
+      mshadow::ps::CreateSharedModel<xpu, real_t>("local");
   ps->Init(devs);
 
   std::vector<INNet *> nets(ndev);
   for (int i = 0; i < ndev; ++i) {
     mshadow::InitTensorEngine<xpu>(devs[i]);
-    nets[i] = new NNet<xpu>(batch_size / ndev, num_in, num_hidden, num_out, devs[i], ps);
+    nets[i] = new NNet<xpu>(batch_size / ndev, num_in, num_hidden, num_out,
+                            devs[i], ps);
   }
 
   // label
   std::vector<int> ytrain, ytest;
   // data
-  TensorContainer<cpu,2> xtrain, xtest;
-  LoadMNIST("train-images-idx3-ubyte", "train-labels-idx1-ubyte", ytrain, xtrain, true);
-  LoadMNIST("t10k-images-idx3-ubyte", "t10k-labels-idx1-ubyte", ytest, xtest, false);
+  TensorContainer<cpu, 2> xtrain, xtest;
+  LoadMNIST("train-images-idx3-ubyte", "train-labels-idx1-ubyte", ytrain,
+            xtrain, true);
+  LoadMNIST("t10k-images-idx3-ubyte", "t10k-labels-idx1-ubyte", ytest, xtest,
+            false);
   int num_iter = 20;
 
-  for (int i = 0; i < num_iter; ++ i) {
+  for (int i = 0; i < num_iter; ++i) {
     // mini-batch per device
     int step = batch_size / ndev;
-    // running parallel threads
-    #pragma omp parallel num_threads(ndev)
+// running parallel threads
+#pragma omp parallel num_threads(ndev)
     {
       // temp output layer
       TensorContainer<cpu, 2, real_t> pred;
@@ -259,9 +265,10 @@ inline int Run(int argc, char *argv[]) {
       int tid = omp_get_thread_num();
       mshadow::SetDevice<xpu>(devs[tid]);
       for (index_t j = 0; j + batch_size <= xtrain.size(0); j += batch_size) {
-        nets[tid]->Forward(xtrain.Slice(j + tid * step, j + (tid + 1) * step), pred);
+        nets[tid]->Forward(xtrain.Slice(j + tid * step, j + (tid + 1) * step),
+                           pred);
         // set gradient into pred
-        for (int k = 0; k < step; ++ k) {
+        for (int k = 0; k < step; ++k) {
           pred[k][ytrain[j + tid * step + k]] -= 1.0f;
         }
         // scale gradient by batchs zie
@@ -272,7 +279,7 @@ inline int Run(int argc, char *argv[]) {
     }
     // evaluation
     long nerr = 0;
-    #pragma omp parallel num_threads(ndev) reduction(+:nerr)
+#pragma omp parallel num_threads(ndev) reduction(+ : nerr)
     {
       // temp output layer
       TensorContainer<cpu, 2, real_t> pred;
@@ -280,16 +287,17 @@ inline int Run(int argc, char *argv[]) {
       int tid = omp_get_thread_num();
       mshadow::SetDevice<xpu>(devs[tid]);
       for (index_t j = 0; j + batch_size <= xtest.size(0); j += batch_size) {
-        nets[tid]->Forward(xtest.Slice(j + tid * step, j + (tid + 1) * step), pred);
-        for (int k = 0; k < step; ++ k) {
+        nets[tid]->Forward(xtest.Slice(j + tid * step, j + (tid + 1) * step),
+                           pred);
+        for (int k = 0; k < step; ++k) {
           nerr += MaxIndex(pred[k]) != ytest[j + tid * step + k];
         }
       }
     }
-    printf("round %d: test-err=%f\n", i, (float)nerr/xtest.size(0));
+    printf("round %d: test-err=%f\n", i, (float)nerr / xtest.size(0));
   }
 
-  for(int i = 0; i < ndev; ++i) {
+  for (int i = 0; i < ndev; ++i) {
     mshadow::SetDevice<xpu>(devs[i]);
     delete nets[i];
     ShutdownTensorEngine<xpu>();
@@ -298,9 +306,10 @@ inline int Run(int argc, char *argv[]) {
 }
 int main(int argc, char *argv[]) {
   if (argc < 3) {
-    printf("Usage: <device> devicelist\n"\
-           "\tExample1: ./nnet_ps cpu 1 2 3\n"\
-           "\tExample2: ./nnet_ps gpu 0 1\n");
+    printf(
+        "Usage: <device> devicelist\n"
+        "\tExample1: ./nnet_ps cpu 1 2 3\n"
+        "\tExample2: ./nnet_ps gpu 0 1\n");
     return 0;
   }
   if (!strcmp(argv[1], "cpu")) {

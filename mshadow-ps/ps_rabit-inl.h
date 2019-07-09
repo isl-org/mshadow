@@ -5,8 +5,8 @@
  *     synchronization in the backend
  * \author Tianqi Chen, Mu Li
  */
-#ifndef MSHADOW_PS_RABIT_INL_H_ // NOLINT(*)
-#define MSHADOW_PS_RABIT_INL_H_ // NOLINT(*)
+#ifndef MSHADOW_PS_RABIT_INL_H_  // NOLINT(*)
+#define MSHADOW_PS_RABIT_INL_H_  // NOLINT(*)
 #include <vector>
 #include "./mshadow_ps.h"
 #include "./ps_local-inl.h"
@@ -16,7 +16,7 @@
 namespace mshadow {
 namespace ps {
 // multi-threaded implementation of
-template<typename xpu, typename DType>
+template <typename xpu, typename DType>
 class RabitModel : public LocalModel<xpu, DType> {
  public:
   // parent type
@@ -56,13 +56,13 @@ class RabitModel : public LocalModel<xpu, DType> {
     Parent::SetParam(name, val);
   }
   // override this function, to use parameter server
-  virtual void HandlePushFinish(Tensor<cpu, 3, DType> data,
-                                int key) {
+  virtual void HandlePushFinish(Tensor<cpu, 3, DType> data, int key) {
     // summation the data fron all devices
     LocalModel<xpu, DType>::ReduceSum(data);
     CHECK_EQ(data[0].CheckContiguous(), true) << "data must be contiguous";
     ReduceTask tsk;
-    tsk.data = data[0]; tsk.key = key;
+    tsk.data = data[0];
+    tsk.key = key;
     reduce_queue_.Push(tsk, 0);
   }
 
@@ -91,8 +91,7 @@ class RabitModel : public LocalModel<xpu, DType> {
         int key = tsk.key;
         rabit::Allreduce<rabit::op::Max>(&key, 1);
         CHECK_EQ(key, tsk.key) << "Allreduce not concensus";
-        rabit::Allreduce<rabit::op::Sum>
-            (tsk.data.dptr_, tsk.data.MSize());
+        rabit::Allreduce<rabit::op::Sum>(tsk.data.dptr_, tsk.data.MSize());
         tsk.data *= 1.0f / rabit::GetWorldSize();
         CHECK_EQ(disable_allreduce_, 0) << "Allreduce disabled error";
         this->HandleReduceFinish(tsk.data, tsk.key);
@@ -103,7 +102,7 @@ class RabitModel : public LocalModel<xpu, DType> {
   }
   /*!\brief entry point of reduce thread */
   inline static MSHADOW_THREAD_PREFIX ReduceGlobalThread(void *pthread) {
-    static_cast<RabitModel*>(pthread)->ReduceHandler();
+    static_cast<RabitModel *>(pthread)->ReduceHandler();
     return NULL;
   }
 };
