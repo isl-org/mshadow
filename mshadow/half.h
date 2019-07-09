@@ -231,7 +231,7 @@ class MSHADOW_ALIGNED(2) half_t {
       v.ui += (v.ui & 0x3fff) != 0x1000 || (significand & 0x7ff) ? 0x1000 : 0;
 #endif
     } else if (v.si <= maxN) {
-      // Handle norms
+    // Handle norms
 #if MSHADOW_HALF_ROUND_TO_NEAREST == 1
       // Rounding may increase the exponent, possibly creating an inf, but
       // that's OK.
@@ -275,7 +275,7 @@ class MSHADOW_ALIGNED(2) half_t {
       v.ui += (v.ui & 0x3fff) != 0x1000 || (significand & 0x7ff) ? 0x1000 : 0;
 #endif
     } else if (v.si <= maxN) {
-      // Handle norms
+    // Handle norms
 #if MSHADOW_HALF_ROUND_TO_NEAREST == 1
       // Rounding may increase the exponent, possibly creating an inf, but
       // that's OK.

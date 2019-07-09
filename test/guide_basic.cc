@@ -1,11 +1,12 @@
-// header file to use mshadow
+#include <gtest/gtest.h>
+#include <iostream>
+
 #include "mshadow/tensor.h"
-// this namespace contains all data structures, functions
+
 using namespace mshadow;
-// this namespace contains all operator overloads
 using namespace mshadow::expr;
 
-int main(void) {
+TEST(Guide, Basic) {
   // intialize tensor engine before using tensor operation, needed for CuBLAS
   InitTensorEngine<cpu>();
   // assume we have a float space
@@ -161,5 +162,4 @@ int main(void) {
     printf("\n");
   }
   ShutdownTensorEngine<cpu>();
-  return 0;
 }

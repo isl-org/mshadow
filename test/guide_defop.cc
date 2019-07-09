@@ -1,9 +1,10 @@
+#include <gtest/gtest.h>
 #include <cmath>
-// header file to use mshadow
+#include <iostream>
+
 #include "mshadow/tensor.h"
-// this namespace contains all data structures, functions
+
 using namespace mshadow;
-// this namespace contains all operator overloads
 using namespace mshadow::expr;
 
 // user defined unary operator addone
@@ -14,6 +15,7 @@ struct addone {
     return a + static_cast<DType>(1);
   }
 };
+
 // user defined binary operator max of two
 struct maxoftwo {
   // map can also be normal functions,
@@ -26,7 +28,7 @@ struct maxoftwo {
   }
 };
 
-int main(void) {
+TEST(Guide, Defop) {
   // intialize tensor engine before using tensor operation, needed for CuBLAS
   InitTensorEngine<cpu>();
   // take first subscript of the tensor
@@ -48,5 +50,4 @@ int main(void) {
   DeleteStream(stream_);
   // shutdown tensor enigne after usage
   ShutdownTensorEngine<cpu>();
-  return 0;
 }
