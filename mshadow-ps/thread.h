@@ -5,28 +5,26 @@
  * for multi-threading that can be compiled in windows, linux, mac
  * \author Tianqi Chen
  */
-#ifndef MSHADOW_PS_THREAD_H_ // NOLINT(*)
-#define MSHADOW_PS_THREAD_H_ // NOLINT(*)
+#ifndef MSHADOW_PS_THREAD_H_  // NOLINT(*)
+#define MSHADOW_PS_THREAD_H_  // NOLINT(*)
 
 #ifdef _MSC_VER
-#include <windows.h>
 #include <process.h>
+#include <windows.h>
 #include "../mshadow/logging.h"
 namespace mshadow {
 namespace utils {
 /*! \brief simple semaphore used for synchronization */
 class Semaphore {
- public :
+ public:
   inline void Init(int init_val) {
     sem = CreateSemaphore(NULL, init_val, 10, NULL);
     CHECK_NE(sem, NULL) << "create Semaphore error";
   }
-  inline void Destroy(void) {
-    CloseHandle(sem);
-  }
+  inline void Destroy(void) { CloseHandle(sem); }
   inline void Wait(void) {
     CHECK_EQ(WaitForSingleObject(sem, INFINITE), WAIT_OBJECT_0)
-      << "WaitForSingleObject error";
+        << "WaitForSingleObject error";
   }
   inline void Post(void) {
     CHECK_NE(ReleaseSemaphore(sem, 1, NULL), 0) << "ReleaseSemaphore error";
@@ -41,17 +39,11 @@ class Mutex {
  public:
   inline void Init(void) {
     CHECK_NE(InitializeCriticalSectionAndSpinCount(&mutex, 0x00000400), 0)
-      << "Mutex::Init fail";
+        << "Mutex::Init fail";
   }
-  inline void Lock(void) {
-    EnterCriticalSection(&mutex);
-  }
-  inline void Unlock(void) {
-    LeaveCriticalSection(&mutex);
-  }
-  inline void Destroy(void) {
-    DeleteCriticalSection(&mutex);
-  }
+  inline void Lock(void) { EnterCriticalSection(&mutex); }
+  inline void Unlock(void) { LeaveCriticalSection(&mutex); }
+  inline void Destroy(void) { DeleteCriticalSection(&mutex); }
 
  private:
   friend class ConditionVariable;
@@ -62,9 +54,7 @@ class Mutex {
 class ConditionVariable {
  public:
   // initialize conditional variable
-  inline void Init(void) {
-    InitializeConditionVariable(&cond);
-  }
+  inline void Init(void) { InitializeConditionVariable(&cond); }
   // destroy the thread
   inline void Destroy(void) {
     // DeleteConditionVariable(&cond);
@@ -72,14 +62,10 @@ class ConditionVariable {
   // wait on the conditional variable
   inline void Wait(Mutex *mutex) {
     CHECK_NE(SleepConditionVariableCS(&cond, &(mutex->mutex), INFINITE), 0)
-      << "ConditionVariable:Wait fail";
+        << "ConditionVariable:Wait fail";
   }
-  inline void Broadcast(void) {
-    WakeAllConditionVariable(&cond);
-  }
-  inline void Signal(void) {
-    WakeConditionVariable(&cond);
-  }
+  inline void Broadcast(void) { WakeAllConditionVariable(&cond); }
+  inline void Signal(void) { WakeConditionVariable(&cond); }
 
  private:
   CONDITION_VARIABLE cond;
@@ -88,11 +74,13 @@ class ConditionVariable {
 /*! \brief simple thread that wraps windows thread */
 class Thread {
  private:
-  HANDLE    thread_handle;
-  unsigned  thread_id;
+  HANDLE thread_handle;
+  unsigned thread_id;
+
  public:
-  inline void Start(unsigned int __stdcall entry(void*p), void *param) {
-    thread_handle = (HANDLE)_beginthreadex(NULL, 0, entry, param, 0, &thread_id);
+  inline void Start(unsigned int __stdcall entry(void *p), void *param) {
+    thread_handle =
+        (HANDLE)_beginthreadex(NULL, 0, entry, param, 0, &thread_id);
   }
   inline int Join(void) {
     WaitForSingleObject(thread_handle, INFINITE);
@@ -100,25 +88,23 @@ class Thread {
   }
 };
 /*! \brief exit function called from thread */
-inline void ThreadExit(void *status) {
-  _endthreadex(0);
-}
+inline void ThreadExit(void *status) { _endthreadex(0); }
 #define MSHADOW_THREAD_PREFIX unsigned int __stdcall
 }  // namespace utils
 }  // namespace mshadow
 #else
 // thread interface using g++
-#include <semaphore.h>
-#include <pthread.h>
 #include <errno.h>
+#include <pthread.h>
+#include <semaphore.h>
 namespace mshadow {
 namespace utils {
 /*!\brief semaphore class */
 class Semaphore {
-  #ifdef __APPLE__
+#ifdef __APPLE__
 
  private:
-  sem_t* semPtr;
+  sem_t *semPtr;
   char sema_name[20];
 
  private:
@@ -153,13 +139,9 @@ class Semaphore {
       exit(EXIT_FAILURE);
     }
   }
-  inline void Wait(void) {
-    sem_wait(semPtr);
-  }
-  inline void Post(void) {
-    sem_post(semPtr);
-  }
-  #else
+  inline void Wait(void) { sem_wait(semPtr); }
+  inline void Post(void) { sem_post(semPtr); }
+#else
 
  private:
   sem_t sem;
@@ -185,24 +167,16 @@ class Semaphore {
       LOG(FATAL) << "Semaphore.Post: " << strerror(errno);
     }
   }
-  #endif
+#endif
 };
 
 // mutex that works with pthread
 class Mutex {
  public:
-  inline void Init(void) {
-    pthread_mutex_init(&mutex, NULL);
-  }
-  inline void Lock(void) {
-    pthread_mutex_lock(&mutex);
-  }
-  inline void Unlock(void) {
-    pthread_mutex_unlock(&mutex);
-  }
-  inline void Destroy(void) {
-    pthread_mutex_destroy(&mutex);
-  }
+  inline void Init(void) { pthread_mutex_init(&mutex, NULL); }
+  inline void Lock(void) { pthread_mutex_lock(&mutex); }
+  inline void Unlock(void) { pthread_mutex_unlock(&mutex); }
+  inline void Destroy(void) { pthread_mutex_destroy(&mutex); }
 
  private:
   friend class ConditionVariable;
@@ -213,23 +187,13 @@ class Mutex {
 class ConditionVariable {
  public:
   // initialize conditional variable
-  inline void Init(void) {
-    pthread_cond_init(&cond, NULL);
-  }
+  inline void Init(void) { pthread_cond_init(&cond, NULL); }
   // destroy the thread
-  inline void Destroy(void) {
-    pthread_cond_destroy(&cond);
-  }
+  inline void Destroy(void) { pthread_cond_destroy(&cond); }
   // wait on the conditional variable
-  inline void Wait(Mutex *mutex) {
-    pthread_cond_wait(&cond, &(mutex->mutex));
-  }
-  inline void Broadcast(void) {
-    pthread_cond_broadcast(&cond);
-  }
-  inline void Signal(void) {
-    pthread_cond_signal(&cond);
-  }
+  inline void Wait(Mutex *mutex) { pthread_cond_wait(&cond, &(mutex->mutex)); }
+  inline void Broadcast(void) { pthread_cond_broadcast(&cond); }
+  inline void Signal(void) { pthread_cond_signal(&cond); }
 
  private:
   pthread_cond_t cond;
@@ -239,8 +203,9 @@ class ConditionVariable {
 class Thread {
  private:
   pthread_t thread;
- public :
-  inline void Start(void * entry(void*), void *param) { // NOLINT(*)
+
+ public:
+  inline void Start(void *entry(void *), void *param) {  // NOLINT(*)
     pthread_attr_t attr;
     pthread_attr_init(&attr);
     pthread_attr_setdetachstate(&attr, PTHREAD_CREATE_JOINABLE);
@@ -251,9 +216,7 @@ class Thread {
     return pthread_join(thread, &status);
   }
 };
-inline void ThreadExit(void *status) {
-  pthread_exit(status);
-}
+inline void ThreadExit(void *status) { pthread_exit(status); }
 }  // namespace utils
 }  // namespace mshadow
 #define MSHADOW_THREAD_PREFIX void *

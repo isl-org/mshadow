@@ -1,21 +1,20 @@
 #ifndef TEST_H
 #define TEST_H
 
-#include "mshadow/tensor.h"
 #include "assert.h"
+#include "mshadow/tensor.h"
 
 #define EPS 0.0001
 using namespace mshadow;
 using namespace mshadow::expr;
 
-
-template<typename xpu>
+template <typename xpu>
 void Print2DTensor(Tensor<xpu, 2, float> const &ts);
 
-template<typename xpu>
+template <typename xpu>
 void Print1DTensor(Tensor<xpu, 1, float> const &ts);
 
-template<>
+template <>
 void Print1DTensor(Tensor<cpu, 1, float> const &ts) {
   for (index_t i = 0; i < ts.size(0); ++i) {
     printf("%.2f ", ts[i]);
@@ -23,15 +22,14 @@ void Print1DTensor(Tensor<cpu, 1, float> const &ts) {
   printf("\n");
 }
 
-
-template<>
+template <>
 void Print2DTensor(Tensor<cpu, 2, float> const &ts) {
   for (index_t i = 0; i < ts.size(0); ++i) {
     Print1DTensor(ts[i]);
   }
 }
 
-template<>
+template <>
 void Print2DTensor(Tensor<gpu, 2, float> const &tg) {
   Tensor<cpu, 2, float> tc = NewTensor<cpu, float>(tg.shape_, 0.0f);
   Copy(tc, tg);
@@ -39,9 +37,8 @@ void Print2DTensor(Tensor<gpu, 2, float> const &tg) {
   FreeSpace(&tc);
 }
 
-
-
-bool Check2DTensor(Tensor<gpu, 2, float> const &tg, Tensor<cpu, 2, float> const &tc) {
+bool Check2DTensor(Tensor<gpu, 2, float> const &tg,
+                   Tensor<cpu, 2, float> const &tc) {
   Tensor<cpu, 2, float> tcc = NewTensor<cpu, float>(tg.shape_, 0.0f);
   Copy(tcc, tg);
   for (index_t i = 0; i < tc.size(0); ++i) {
@@ -53,7 +50,8 @@ bool Check2DTensor(Tensor<gpu, 2, float> const &tg, Tensor<cpu, 2, float> const 
   return true;
 }
 
-bool Check1DTensor(Tensor<gpu, 1, float> const &tg, Tensor<cpu, 1, float> const &tc) {
+bool Check1DTensor(Tensor<gpu, 1, float> const &tg,
+                   Tensor<cpu, 1, float> const &tc) {
   Tensor<cpu, 1, float> tcc = NewTensor<cpu, float>(tc.shape_, 0.0f);
   Copy(tcc, tg);
   printf("gpu result:\n");

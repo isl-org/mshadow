@@ -2,16 +2,15 @@
 #include <mshadow/tensor.h>
 #include <sstream>
 
-template<typename DType>
+template <typename DType>
 std::string dbstr(mshadow::Tensor<mshadow::cpu, 1, DType> ts) {
   std::stringstream ss;
-  for (mshadow::index_t i = 0; i < ts.size(0); ++i)
-    ss << ts[i] << " ";
+  for (mshadow::index_t i = 0; i < ts.size(0); ++i) ss << ts[i] << " ";
   ss << "\n";
   return ss.str();
 }
 
-template<typename DType>
+template <typename DType>
 std::string dbstr(mshadow::Tensor<mshadow::cpu, 2, DType> ts) {
   std::stringstream ss;
   for (mshadow::index_t i = 0; i < ts.size(0); ++i) {
@@ -24,7 +23,7 @@ std::string dbstr(mshadow::Tensor<mshadow::cpu, 2, DType> ts) {
   return ss.str();
 }
 
-template<typename DType>
+template <typename DType>
 std::string dbstr(mshadow::Tensor<mshadow::cpu, 3, DType> ts) {
   std::stringstream ss;
   for (mshadow::index_t i = 0; i < ts.size(0); ++i) {

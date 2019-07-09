@@ -11,7 +11,7 @@
 
 namespace mshadow {
 namespace packet {
-template<typename DType>
+template <typename DType>
 struct Packet<DType, kPlain> {
  public:
   /*! \brief number of float in vector */
@@ -40,35 +40,31 @@ struct Packet<DType, kPlain> {
     return *this;
   }
   // store data into dst
-  MSHADOW_CINLINE void Store(DType* dst) const {
-    *dst = data_;
-  }
+  MSHADOW_CINLINE void Store(DType* dst) const { *dst = data_; }
   // get the sum of all contents
-  MSHADOW_CINLINE DType Sum() const {
-    return data_;
-  }
+  MSHADOW_CINLINE DType Sum() const { return data_; }
 };
 
-template<typename DType>
-MSHADOW_CINLINE Packet<DType, kPlain> operator+(const Packet<DType, kPlain>& lhs,
-                                                const Packet<DType, kPlain>& rhs) {
+template <typename DType>
+MSHADOW_CINLINE Packet<DType, kPlain> operator+(
+    const Packet<DType, kPlain>& lhs, const Packet<DType, kPlain>& rhs) {
   return Packet<DType, kPlain>(lhs.data_ + rhs.data_);
 }
 
-template<typename DType>
-MSHADOW_CINLINE Packet<DType, kPlain> operator-(const Packet<DType, kPlain>& lhs,
-                                                const Packet<DType, kPlain>& rhs) {
+template <typename DType>
+MSHADOW_CINLINE Packet<DType, kPlain> operator-(
+    const Packet<DType, kPlain>& lhs, const Packet<DType, kPlain>& rhs) {
   return Packet<DType, kPlain>(lhs.data_ - rhs.data_);
 }
-template<typename DType>
-MSHADOW_CINLINE Packet<DType, kPlain> operator*(const Packet<DType, kPlain>& lhs,
-                                                    const Packet<DType, kPlain>& rhs) {
+template <typename DType>
+MSHADOW_CINLINE Packet<DType, kPlain> operator*(
+    const Packet<DType, kPlain>& lhs, const Packet<DType, kPlain>& rhs) {
   return Packet<DType, kPlain>(lhs.data_ * rhs.data_);
 }
 
-template<typename DType>
-MSHADOW_CINLINE Packet<DType, kPlain> operator/(const Packet<DType, kPlain>& lhs,
-                                                    const Packet<DType, kPlain>& rhs) {
+template <typename DType>
+MSHADOW_CINLINE Packet<DType, kPlain> operator/(
+    const Packet<DType, kPlain>& lhs, const Packet<DType, kPlain>& rhs) {
   return Packet<DType, kPlain>(lhs.data_ / rhs.data_);
 }
 }  // namespace packet

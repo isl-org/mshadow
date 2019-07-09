@@ -1,22 +1,21 @@
 /**
  * @brief  Simple test of KVLayer
  */
-#include "ps.h"
-#include "parameter/kv_layer.h"
+#include <mshadow-ps/mshadow_ps.h>
+#include <mshadow/tensor.h>
+#include <omp.h>
 #include <cstdio>
 #include <iostream>
-#include <omp.h>
 #include <map>
-#include <mshadow/tensor.h>
-#include <mshadow-ps/mshadow_ps.h>
 #include "dbstr.h"
 #include "glog/logging.h"
+#include "parameter/kv_layer.h"
+#include "ps.h"
 
 namespace mshadow {
 namespace ps {
 
-
-template<typename DType>
+template <typename DType>
 class Updater : public IModelUpdater<DType> {
  protected:
   void InitModel_(int key, Tensor<cpu, 1, DType> data) {
@@ -31,7 +30,7 @@ class Updater : public IModelUpdater<DType> {
   std::map<int, Tensor<cpu, 1, DType> > data_;
 };
 
-template<typename DType>
+template <typename DType>
 IModelUpdater<DType> *CreateModelUpdater(void) {
   return new Updater<DType>();
 }
@@ -40,12 +39,12 @@ IModelUpdater<DType> *CreateModelUpdater(void) {
 }  // namespace mshadow
 
 // this function is runed by specific thread
-template<typename xpu>
+template <typename xpu>
 inline void RunWorkerThread(int devid,
                             mshadow::ps::ISharedModel<xpu, float> *ps) {
   // initialize tensor engine
   mshadow::InitTensorEngine<xpu>(devid);
-  mshadow::Stream<xpu> *stream  = mshadow::NewStream<xpu>();
+  mshadow::Stream<xpu> *stream = mshadow::NewStream<xpu>();
   // allocate tensor on xpu
   mshadow::TensorContainer<xpu, 2> data(mshadow::Shape2(2, 3));
   // set the computation stream to the new allocated stream
@@ -65,7 +64,8 @@ inline void RunWorkerThread(int devid,
 
   data[1] = devid + data[0];
 
-  LOG(ERROR) << "node " << ::ps::MyNodeID() << ", dev " << devid << ": before sync\n"
+  LOG(ERROR) << "node " << ::ps::MyNodeID() << ", dev " << devid
+             << ": before sync\n"
              << dbstr(data);
 
   // push data[0] out, for update, or aggregation
@@ -87,18 +87,20 @@ inline void RunWorkerThread(int devid,
   ps->PullWait(1, devid);
 
   LOG(ERROR) << "node " << ::ps::MyNodeID() << ", dev " << devid
-             << ": after sync\n" << dbstr(data);
+             << ": after sync\n"
+             << dbstr(data);
 
   mshadow::DeleteStream(stream);
   mshadow::ShutdownTensorEngine<xpu>();
 }
 
-template<typename xpu>
+template <typename xpu>
 inline int Run(int argc, char *argv[]) {
   if (argc < 2) {
-    printf("Usage: device list\n"\
-           "\tfor CPU the device list can be arbitrary\n"\
-           "\tfor GPU the device list need to be actual device index\n");
+    printf(
+        "Usage: device list\n"
+        "\tfor CPU the device list can be arbitrary\n"
+        "\tfor GPU the device list need to be actual device index\n");
     return 0;
   }
   // list of device ids
@@ -108,13 +110,13 @@ inline int Run(int argc, char *argv[]) {
     // record the device id
     devs.push_back(atoi(argv[i]));
   }
-  mshadow::ps::ISharedModel<xpu, float>
-      *ps = mshadow::ps::CreateSharedModel<xpu, float>("dist");
+  mshadow::ps::ISharedModel<xpu, float> *ps =
+      mshadow::ps::CreateSharedModel<xpu, float>("dist");
   // intiaialize the ps
   ps->SetParam("update_on_server", "1");
   ps->Init(devs);
-  // use openmp to launch #devs threads
-  #pragma omp parallel num_threads(devs.size())
+// use openmp to launch #devs threads
+#pragma omp parallel num_threads(devs.size())
   {
     int tid = omp_get_thread_num();
     RunWorkerThread<xpu>(devs[tid], ps);

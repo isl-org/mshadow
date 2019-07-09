@@ -8,8 +8,8 @@
 #ifndef MSHADOW_RANDOM_H_
 #define MSHADOW_RANDOM_H_
 
-#include <cstdlib>
 #include <algorithm>
+#include <cstdlib>
 #include <random>
 #include "./base.h"
 #include "./tensor.h"
@@ -23,18 +23,17 @@
 #define rand_r(x) rand()
 #endif
 
-
 namespace mshadow {
 /*!
  * \brief random number generator
  * \tparam Device the device of random number generator
  * \tparam DType the target data type of random number can be float for double
  */
-template<typename Device, typename DType MSHADOW_DEFAULT_DTYPE>
+template <typename Device, typename DType MSHADOW_DEFAULT_DTYPE>
 class Random {};
 
 /*! \brief CPU random number generator */
-template<typename DType>
+template <typename DType>
 class Random<cpu, DType> {
  public:
   /*!
@@ -45,8 +44,7 @@ class Random<cpu, DType> {
     this->Seed(seed);
     buffer_.Resize(Shape1(kRandBufferSize));
   }
-  ~Random(void) {
-  }
+  ~Random(void) {}
   /*!
    * \brief seed random number generator using this seed
    * \param seed seed of prng
@@ -61,15 +59,12 @@ class Random<cpu, DType> {
    * \brief get random seed used in random generator
    * \return seed in unsigned
    */
-  inline unsigned GetSeed() const {
-    return rseed_;
-  }
+  inline unsigned GetSeed() const { return rseed_; }
   /*!
    * \brief set the stream of computation
    * \param stream computation stream
    */
-  inline void set_stream(Stream<cpu> *stream) {
-  }
+  inline void set_stream(Stream<cpu> *stream) {}
 
 // These samplers are only avail in C++11.
 #if MSHADOW_IN_CXX11
@@ -78,15 +73,13 @@ class Random<cpu, DType> {
    * \brief get some random integer
    * \return integer as unsigned
    */
-  inline unsigned GetRandInt() {
-    return rnd_engine_();
-  }
+  inline unsigned GetRandInt() { return rnd_engine_(); }
 
   /*!
    * \brief get a set of random integers
    */
-  inline void GetRandInt(const Tensor<cpu, 1, unsigned>& dst) {
-    std::generate_n(dst.dptr_, dst.size(0), [&](){ return rnd_engine_(); });
+  inline void GetRandInt(const Tensor<cpu, 1, unsigned> &dst) {
+    std::generate_n(dst.dptr_, dst.size(0), [&]() { return rnd_engine_(); });
   }
 
   /*!
@@ -95,8 +88,9 @@ class Random<cpu, DType> {
    * \tparam dim dimension of tensor
    * \param sampler sampler of the distribution
    */
-  template<int dim, class Sampler>
-  inline void SampleDistribution(Tensor<cpu, dim, DType> *dst, Sampler sampler) {
+  template <int dim, class Sampler>
+  inline void SampleDistribution(Tensor<cpu, dim, DType> *dst,
+                                 Sampler sampler) {
     if (dst->CheckContiguous()) {
       std::generate_n(dst->dptr_, dst->shape_.Size(), sampler);
     } else {
@@ -114,17 +108,17 @@ class Random<cpu, DType> {
    * \param b upper bound of uniform
    * \tparam dim dimension of tensor
    */
-  template<int dim, typename PType>
-  inline void SampleUniform(Tensor<cpu, dim, DType> *dst,
-                            PType a = 0.0f , PType b = 1.0f ) {
+  template <int dim, typename PType>
+  inline void SampleUniform(Tensor<cpu, dim, DType> *dst, PType a = 0.0f,
+                            PType b = 1.0f) {
     // Ensure that half_t is handled correctly.
     typedef typename std::conditional<std::is_floating_point<DType>::value,
                                       DType, double>::type FType;
-    typedef typename std::conditional<std::is_integral<DType>::value,
-                                      std::uniform_int_distribution<DType>,
-                                      std::uniform_real_distribution<FType>>::type GType;
+    typedef typename std::conditional<
+        std::is_integral<DType>::value, std::uniform_int_distribution<DType>,
+        std::uniform_real_distribution<FType>>::type GType;
     GType dist_uniform(a, b);
-    SampleDistribution(dst, [&](){ return dist_uniform(rnd_engine_);});
+    SampleDistribution(dst, [&]() { return dist_uniform(rnd_engine_); });
   }
 
   /*!
@@ -134,16 +128,17 @@ class Random<cpu, DType> {
    * \param sigma standard deviation
    * \tparam dim dimension of tensor
    */
-  template<int dim, typename PType>
-  inline void SampleGaussian(Tensor<cpu, dim, DType> *dst,
-                             PType mu = 0.0f, PType sigma = 1.0f ) {
+  template <int dim, typename PType>
+  inline void SampleGaussian(Tensor<cpu, dim, DType> *dst, PType mu = 0.0f,
+                             PType sigma = 1.0f) {
     if (sigma <= 0) {
-      *dst = mu; return;
+      *dst = mu;
+      return;
     }
     typedef typename std::conditional<std::is_floating_point<DType>::value,
                                       DType, double>::type GType;
     std::normal_distribution<GType> dist_normal(mu, sigma);
-    SampleDistribution(dst, [&](){ return dist_normal(rnd_engine_);});
+    SampleDistribution(dst, [&]() { return dist_normal(rnd_engine_); });
   }
 
   /*!
@@ -153,13 +148,13 @@ class Random<cpu, DType> {
    * \param beta (scale) parameter
    * \tparam dim dimension of tensor
    */
-  template<int dim, typename PType>
-  inline void SampleGamma(Tensor<cpu, dim, DType> *dst,
-                          PType alpha, PType beta) {
+  template <int dim, typename PType>
+  inline void SampleGamma(Tensor<cpu, dim, DType> *dst, PType alpha,
+                          PType beta) {
     typedef typename std::conditional<std::is_floating_point<DType>::value,
                                       DType, double>::type GType;
     std::gamma_distribution<GType> dist_gamma(alpha, beta);
-    SampleDistribution(dst, [&](){ return dist_gamma(rnd_engine_);});
+    SampleDistribution(dst, [&]() { return dist_gamma(rnd_engine_); });
   }
 
   /*!
@@ -168,12 +163,12 @@ class Random<cpu, DType> {
    * \param lambda parameter (rate) of the distribution
    * \tparam dim dimension of tensor
    */
-  template<int dim, typename PType>
-  inline void SampleExponential(Tensor<cpu, dim, DType> *dst, PType lambda ) {
+  template <int dim, typename PType>
+  inline void SampleExponential(Tensor<cpu, dim, DType> *dst, PType lambda) {
     typedef typename std::conditional<std::is_floating_point<DType>::value,
                                       DType, double>::type GType;
     std::exponential_distribution<GType> dist_exp(lambda);
-    SampleDistribution(dst, [&](){ return dist_exp(rnd_engine_);});
+    SampleDistribution(dst, [&]() { return dist_exp(rnd_engine_); });
   }
 
   /*!
@@ -182,11 +177,13 @@ class Random<cpu, DType> {
    * \param lambda parameter (rate) of the distribution
    * \tparam dim dimension of tensor
    */
-  template<int dim, typename PType>
+  template <int dim, typename PType>
   inline void SamplePoisson(Tensor<cpu, dim, DType> *dst, PType lambda) {
-    typedef typename std::conditional<std::is_integral<DType>::value, DType, int>::type GType;
+    typedef typename std::conditional<std::is_integral<DType>::value, DType,
+                                      int>::type GType;
     std::poisson_distribution<GType> dist_poisson(lambda);
-    SampleDistribution(dst, [&](){ return static_cast<DType>(dist_poisson(rnd_engine_));});
+    SampleDistribution(
+        dst, [&]() { return static_cast<DType>(dist_poisson(rnd_engine_)); });
   }
 
   /*!
@@ -196,11 +193,15 @@ class Random<cpu, DType> {
    * \param p success probability
    * \tparam dim dimension of tensor
    */
-  template<int dim, typename PType1, typename PType2>
-  inline void SampleNegativeBinomial(Tensor<cpu, dim, DType> *dst, PType1 k, PType2 p) {
-    typedef typename std::conditional<std::is_integral<DType>::value, DType, int>::type GType;
+  template <int dim, typename PType1, typename PType2>
+  inline void SampleNegativeBinomial(Tensor<cpu, dim, DType> *dst, PType1 k,
+                                     PType2 p) {
+    typedef typename std::conditional<std::is_integral<DType>::value, DType,
+                                      int>::type GType;
     std::negative_binomial_distribution<GType> dist_negbinomial(k, p);
-    SampleDistribution(dst, [&](){ return static_cast<DType>(dist_negbinomial(rnd_engine_));});
+    SampleDistribution(dst, [&]() {
+      return static_cast<DType>(dist_negbinomial(rnd_engine_));
+    });
   }
 
   /*!
@@ -211,7 +212,7 @@ class Random<cpu, DType> {
    *   (for alpha=0 this gives a Poisson)
    * \tparam dim dimension of tensor
    */
-  template<int dim, typename PType>
+  template <int dim, typename PType>
   inline void SampleGeneralizedNegativeBinomial(Tensor<cpu, dim, DType> *dst,
                                                 PType mu, PType alpha) {
     if (alpha == PType(0)) {
@@ -220,54 +221,54 @@ class Random<cpu, DType> {
       PType r(PType(1) / alpha);
       PType beta = mu * alpha;
       std::gamma_distribution<> dist_gamma(r, beta);
-      typedef typename std::conditional<std::is_integral<DType>::value, DType, int>::type GType;
-      SampleDistribution(dst,
-        [&](){ std::poisson_distribution<GType> dist_poisson(dist_gamma(rnd_engine_));
-               return static_cast<DType>(dist_poisson(rnd_engine_));});
+      typedef typename std::conditional<std::is_integral<DType>::value, DType,
+                                        int>::type GType;
+      SampleDistribution(dst, [&]() {
+        std::poisson_distribution<GType> dist_poisson(dist_gamma(rnd_engine_));
+        return static_cast<DType>(dist_poisson(rnd_engine_));
+      });
     }
   }
 #endif
 
   /*!
-   * \brief return a temporal expression storing standard gaussian random variables
-   *        the temporal tensor is only valid before next call of gaussian or uniform
-   *        can be used as part of expression
-   *  Caution: this means expression such as A = gaussian(s1) * gaussian(s2) will give invalid result,
-   *           since second call of gaussian(s2) makes gaussian(s1) invalid
-   *           A = gaussian(s1)*B+C; is correct; use one gaussian/uniform in each expression
+   * \brief return a temporal expression storing standard gaussian random
+   * variables the temporal tensor is only valid before next call of gaussian or
+   * uniform can be used as part of expression Caution: this means expression
+   * such as A = gaussian(s1) * gaussian(s2) will give invalid result, since
+   * second call of gaussian(s2) makes gaussian(s1) invalid A =
+   * gaussian(s1)*B+C; is correct; use one gaussian/uniform in each expression
    * \param shape shape of the tensor
    * \return a temporal expression storing standard gaussian random variables
    * \tparam dim dimension of tensor
    */
-  template<int dim>
-  inline expr::ReshapeExp<Tensor<cpu, 1, DType>, DType, dim, 1>
-  gaussian(Shape<dim> shape) {
+  template <int dim>
+  inline expr::ReshapeExp<Tensor<cpu, 1, DType>, DType, dim, 1> gaussian(
+      Shape<dim> shape) {
     buffer_.Resize(Shape1(shape.Size()));
     this->SampleGaussian(&buffer_, 0.0f, 1.0f);
     return expr::reshape(buffer_, shape);
   }
   /*!
    * \brief return a temporal expression storing standard uniform [0,1)
-   *        the temporal tensor is only valid before next call of gaussian or uniform
-   *        can be used as part of expression
-   *  Caution: this means expression such as A = uniform(s1) * uniform(s2) will give invalid result,
-   *           since second call of gaussian(s2) makes gaussian(s1) invalid
-   *           A = gaussian(s1)*B+C; is correct; use one gaussian/uniform in each expression
+   *        the temporal tensor is only valid before next call of gaussian or
+   * uniform can be used as part of expression Caution: this means expression
+   * such as A = uniform(s1) * uniform(s2) will give invalid result, since
+   * second call of gaussian(s2) makes gaussian(s1) invalid A =
+   * gaussian(s1)*B+C; is correct; use one gaussian/uniform in each expression
    * \param shape shape of the tensor
    * \return a temporal expression storing standard uniform [0,1)
    * \tparam dim dimension of tensor
    */
-  template<int dim>
-  inline expr::ReshapeExp<Tensor<cpu, 1, DType>, DType, dim, 1>
-  uniform(Shape<dim> shape) {
+  template <int dim>
+  inline expr::ReshapeExp<Tensor<cpu, 1, DType>, DType, dim, 1> uniform(
+      Shape<dim> shape) {
     buffer_.Resize(Shape1(shape.Size()));
     this->SampleUniform(&buffer_, 0.0f, 1.0f);
     return expr::reshape(buffer_, shape);
   }
 
-  std::mt19937 &GetRndEngine() {
-    return rnd_engine_;
-  }
+  std::mt19937 &GetRndEngine() { return rnd_engine_; }
 
  private:
 #if MSHADOW_IN_CXX11
@@ -281,9 +282,9 @@ class Random<cpu, DType> {
   /*! \brief random number seed used by PRNG */
   unsigned rseed_;
   // functions
-  template<int dim>
-  inline void SampleUniform(Tensor<cpu, dim, DType> *dst,
-                            DType a = 0.0f, DType b = 1.0f) {
+  template <int dim>
+  inline void SampleUniform(Tensor<cpu, dim, DType> *dst, DType a = 0.0f,
+                            DType b = 1.0f) {
     if (dst->CheckContiguous()) {
       this->GenUniform(dst->dptr_, dst->shape_.Size(), a, b);
     } else {
@@ -293,11 +294,12 @@ class Random<cpu, DType> {
       }
     }
   }
-  template<int dim>
-  inline void SampleGaussian(Tensor<cpu, dim, DType> *dst,
-                             DType mu = 0.0f, DType sigma = 1.0f) {
+  template <int dim>
+  inline void SampleGaussian(Tensor<cpu, dim, DType> *dst, DType mu = 0.0f,
+                             DType sigma = 1.0f) {
     if (sigma <= 0.0f) {
-      *dst = mu; return;
+      *dst = mu;
+      return;
     }
     if (dst->CheckContiguous()) {
       this->GenGaussian(dst->dptr_, dst->shape_.Size(), mu, sigma);
@@ -338,12 +340,12 @@ class Random<cpu, DType> {
   /*! \brief get next random number from rand */
   inline DType RandNext(void) {
     return static_cast<DType>(rand_r(&rseed_)) /
-        (static_cast<DType>(RAND_MAX) + 1.0f);
+           (static_cast<DType>(RAND_MAX) + 1.0f);
   }
   /*! \brief return a real numer uniform in (0,1) */
   inline DType RandNext2(void) {
     return (static_cast<DType>(rand_r(&rseed_)) + 1.0f) /
-        (static_cast<DType>(RAND_MAX) + 2.0f);
+           (static_cast<DType>(RAND_MAX) + 2.0f);
   }
   /*!
    * \brief sample iid xx,yy ~N(0,1)
@@ -359,7 +361,8 @@ class Random<cpu, DType> {
       s = x * x + y * y;
     } while (s >= 1.0f || s == 0.0f);
     DType t = std::sqrt(-2.0f * std::log(s) / s);
-    xx = x * t; yy = y * t;
+    xx = x * t;
+    yy = y * t;
   }
 #endif
   /*! \brief temporal space used to store random numbers */
@@ -369,7 +372,7 @@ class Random<cpu, DType> {
 // only allow GPU PRNG when cuda is enabled
 #if MSHADOW_USE_CUDA
 /*! \brief GPU random number generator */
-template<typename DType>
+template <typename DType>
 class Random<gpu, DType> {
  public:
   /*!
@@ -380,9 +383,7 @@ class Random<gpu, DType> {
     this->Seed(seed);
     buffer_.Resize(Shape1(kRandBufferSize));
   }
-  ~Random(void) MSHADOW_THROW_EXCEPTION {
-    DeleteGenerator();
-  }
+  ~Random(void) MSHADOW_THROW_EXCEPTION { DeleteGenerator(); }
   /*!
    * \brief set the stream of computation
    * \param stream computation stream
@@ -398,18 +399,21 @@ class Random<gpu, DType> {
    * \param seed seed of prng
    */
   inline void Seed(int seed) {
-    // Create a new rng, either initially or if the RNG type can't reset its offset.
-    if (gen_ == NULL || (curandSetGeneratorOffset(gen_, 0ULL) != CURAND_STATUS_SUCCESS))
+    // Create a new rng, either initially or if the RNG type can't reset its
+    // offset.
+    if (gen_ == NULL ||
+        (curandSetGeneratorOffset(gen_, 0ULL) != CURAND_STATUS_SUCCESS))
       CreateGenerator();
     // Now set the seed.
     curandStatus_t status;
-    status = curandSetPseudoRandomGeneratorSeed(gen_, static_cast<uint64_t>(seed));
+    status =
+        curandSetPseudoRandomGeneratorSeed(gen_, static_cast<uint64_t>(seed));
     CHECK_EQ(status, CURAND_STATUS_SUCCESS) << "Set CURAND seed failed.";
   }
   /*!
    * \brief get a set of random integers
    */
-  inline void GetRandInt(const Tensor<gpu, 1, unsigned>& dst) {
+  inline void GetRandInt(const Tensor<gpu, 1, unsigned> &dst) {
     curandStatus_t status = curandGenerate(gen_, dst.dptr_, dst.size(0));
     CHECK_EQ(status, CURAND_STATUS_SUCCESS) << "CURAND Gen rand ints failed.";
   }
@@ -420,9 +424,9 @@ class Random<gpu, DType> {
    * \param b upper bound of uniform
    * \tparam dim dimension of tensor
    */
-  template<int dim>
-  inline void SampleUniform(Tensor<gpu, dim, DType> *dst,
-                            DType a = 0.0f, DType b = 1.0f);
+  template <int dim>
+  inline void SampleUniform(Tensor<gpu, dim, DType> *dst, DType a = 0.0f,
+                            DType b = 1.0f);
 
   /*!
    * \brief generate data from standard gaussian
@@ -431,72 +435,71 @@ class Random<gpu, DType> {
    * \param sigma standard deviation
    * \tparam dim dimension of tensor
    */
-  template<int dim>
-  inline void SampleGaussian(Tensor<gpu, dim, DType> *dst,
-                             DType mu = 0.0f, DType sigma = 1.0f);
+  template <int dim>
+  inline void SampleGaussian(Tensor<gpu, dim, DType> *dst, DType mu = 0.0f,
+                             DType sigma = 1.0f);
   /*!
-   * \brief return a temporal expression storing standard gaussian random variables
-   *        the temporal tensor is only valid before next call of gaussian or uniform
-   *        can be used as part of expression
-   *  Caution: this means expression such as A = gaussian(s1) * gaussian(s2) will give invalid result,
-   *           since second call of gaussian(s2) makes gaussian(s1) invalid
-   *           A = gaussian(s1)*B+C; is correct; use one gaussian/uniform in each expression
+   * \brief return a temporal expression storing standard gaussian random
+   * variables the temporal tensor is only valid before next call of gaussian or
+   * uniform can be used as part of expression Caution: this means expression
+   * such as A = gaussian(s1) * gaussian(s2) will give invalid result, since
+   * second call of gaussian(s2) makes gaussian(s1) invalid A =
+   * gaussian(s1)*B+C; is correct; use one gaussian/uniform in each expression
    * \param shape shape of the tensor
    * \param mu mean
    * \param sigma variance
    * \return a temporal expression storing standard gaussian random variables
    * \tparam dim dimension of tensor
    */
-  template<int dim>
-  inline expr::ReshapeExp<Tensor<gpu, 1, DType>, DType, dim, 1>
-  gaussian(Shape<dim> shape, DType mu = 0.0f, DType sigma = 1.0f);
+  template <int dim>
+  inline expr::ReshapeExp<Tensor<gpu, 1, DType>, DType, dim, 1> gaussian(
+      Shape<dim> shape, DType mu = 0.0f, DType sigma = 1.0f);
   /*!
    * \brief return a temporal expression storing standard uniform [0,1)
-   *        the temporal tensor is only valid before next call of gaussian or uniform
-   *        can be used as part of expression
-   *  Caution: this means expression such as A = gaussian(s1) * gaussian(s2) will give invalid result,
-   *           since second call of gaussian(s2) makes gaussian(s1) invalid
-   *           A = gaussian(s1)*B+C; is correct; use one gaussian/uniform in each expression
+   *        the temporal tensor is only valid before next call of gaussian or
+   * uniform can be used as part of expression Caution: this means expression
+   * such as A = gaussian(s1) * gaussian(s2) will give invalid result, since
+   * second call of gaussian(s2) makes gaussian(s1) invalid A =
+   * gaussian(s1)*B+C; is correct; use one gaussian/uniform in each expression
    * \param shape shape of the tensor
    * \return a temporal expression storing standard uniform [0,1)
    * \tparam dim dimension of tensor
    */
-  template<int dim>
-  inline expr::ReshapeExp<Tensor<gpu, 1, DType>, DType, dim, 1>
-  uniform(Shape<dim> shape);
+  template <int dim>
+  inline expr::ReshapeExp<Tensor<gpu, 1, DType>, DType, dim, 1> uniform(
+      Shape<dim> shape);
 
  private:
   inline void GenGaussian(float *dptr, size_t size, float mu, float sigma) {
     curandStatus_t status;
     status = curandGenerateNormal(gen_, dptr, size, mu, sigma);
-    CHECK_EQ(status, CURAND_STATUS_SUCCESS) << "CURAND Gen Normal float failed."
-                                            << " size = " << size
-                                            << ",mu = " << mu
-                                            << ",sigma = " << sigma;
+    CHECK_EQ(status, CURAND_STATUS_SUCCESS)
+        << "CURAND Gen Normal float failed."
+        << " size = " << size << ",mu = " << mu << ",sigma = " << sigma;
   }
   inline void GenGaussian(double *dptr, size_t size, double mu, double sigma) {
     curandStatus_t status;
     status = curandGenerateNormalDouble(gen_, dptr, size, mu, sigma);
-    CHECK_EQ(status, CURAND_STATUS_SUCCESS) << "CURAND Gen Normal double failed."
-                                            << " size = " << size
-                                            << ",mu = " << mu
-                                            << ",sigma = " << sigma;
+    CHECK_EQ(status, CURAND_STATUS_SUCCESS)
+        << "CURAND Gen Normal double failed."
+        << " size = " << size << ",mu = " << mu << ",sigma = " << sigma;
   }
   inline void GenUniform(float *dptr, size_t size) {
     curandStatus_t status;
     status = curandGenerateUniform(gen_, dptr, size);
-    CHECK_EQ(status, CURAND_STATUS_SUCCESS) << "CURAND Gen Uniform float failed."
-                                            << " size = " << size;
+    CHECK_EQ(status, CURAND_STATUS_SUCCESS)
+        << "CURAND Gen Uniform float failed."
+        << " size = " << size;
   }
   inline void GenUniform(double *dptr, size_t size) {
     curandStatus_t status;
     status = curandGenerateUniformDouble(gen_, dptr, size);
-    CHECK_EQ(status, CURAND_STATUS_SUCCESS) << "CURAND Gen Uniform double failed."
-                                            << " size = " << size;
+    CHECK_EQ(status, CURAND_STATUS_SUCCESS)
+        << "CURAND Gen Uniform double failed."
+        << " size = " << size;
   }
   inline void CreateGenerator() {
-    if (gen_ != NULL)
-      DeleteGenerator();
+    if (gen_ != NULL) DeleteGenerator();
     curandStatus_t status;
     status = curandCreateGenerator(&gen_, CURAND_RNG_PSEUDO_DEFAULT);
     CHECK_EQ(status, CURAND_STATUS_SUCCESS) << "Cannot create CURAND Generator";
@@ -513,15 +516,15 @@ class Random<gpu, DType> {
   curandGenerator_t gen_;
   /*! \brief templ buffer */
   TensorContainer<gpu, 1, DType> buffer_;
-};  // class Random<gpu, DType>
+};      // class Random<gpu, DType>
 #endif  // MSHADOW_USE_CUDA
 
 #ifdef __CUDACC__
 // implementations that depends on cuda kernels
-template<typename DType>
-template<int dim>
-inline void Random<gpu, DType>::SampleUniform(
-    Tensor<gpu, dim, DType> *dst, DType a, DType b) {
+template <typename DType>
+template <int dim>
+inline void Random<gpu, DType>::SampleUniform(Tensor<gpu, dim, DType> *dst,
+                                              DType a, DType b) {
   if (a == 0.0f && b == 1.0f) {
     if (dst->CheckContiguous()) {
       this->GenUniform(dst->dptr_, dst->shape_.Size());
@@ -532,12 +535,12 @@ inline void Random<gpu, DType>::SampleUniform(
     *dst = this->uniform(dst->shape_) * (b - a) + a;
   }
 }
-template<typename DType>
-template<int dim>
-inline void Random<gpu, DType>::SampleGaussian(
-    Tensor<gpu, dim, DType> *dst, DType mu, DType sigma) {
-  // We need to check whether the shape size is even since CuRand supports only normal distribution
-  // generation of even number of elements.
+template <typename DType>
+template <int dim>
+inline void Random<gpu, DType>::SampleGaussian(Tensor<gpu, dim, DType> *dst,
+                                               DType mu, DType sigma) {
+  // We need to check whether the shape size is even since CuRand supports only
+  // normal distribution generation of even number of elements.
   if (dst->CheckContiguous() && (dst->shape_.Size() % 2 == 0)) {
     this->GenGaussian(dst->dptr_, dst->shape_.Size(), mu, sigma);
   } else {
@@ -545,8 +548,8 @@ inline void Random<gpu, DType>::SampleGaussian(
   }
 }
 
-template<typename DType>
-template<int dim>
+template <typename DType>
+template <int dim>
 inline expr::ReshapeExp<Tensor<gpu, 1, DType>, DType, dim, 1>
 Random<gpu, DType>::gaussian(Shape<dim> shape, DType mu, DType sigma) {
   size_t aligned_sz = ((shape.Size() + 1UL) >> 1) << 1;
@@ -557,8 +560,8 @@ Random<gpu, DType>::gaussian(Shape<dim> shape, DType mu, DType sigma) {
   return expr::reshape(buffer_, shape);
 }
 
-template<typename DType>
-template<int dim>
+template <typename DType>
+template <int dim>
 inline expr::ReshapeExp<Tensor<gpu, 1, DType>, DType, dim, 1>
 Random<gpu, DType>::uniform(Shape<dim> shape) {
   buffer_.Resize(Shape1(shape.Size()));

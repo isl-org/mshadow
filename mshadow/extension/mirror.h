@@ -15,10 +15,9 @@ namespace expr {
  * \tparam DType the type of elements
  * \tparam srcdim dimension of src
  */
-template<typename SrcExp, typename DType, int srcdim>
-struct MirroringExp:
-      public MakeTensorExp<MirroringExp<SrcExp, DType, srcdim>,
-                           SrcExp, srcdim, DType> {
+template <typename SrcExp, typename DType, int srcdim>
+struct MirroringExp : public MakeTensorExp<MirroringExp<SrcExp, DType, srcdim>,
+                                           SrcExp, srcdim, DType> {
   /*! \brief source operand */
   const SrcExp &src_;
   /*! \brief constructor */
@@ -34,17 +33,17 @@ struct MirroringExp:
  * \tparam DType the type of elements
  * \tparam etype type of expression
  */
-template<typename SrcExp, typename DType, int etype>
-inline MirroringExp<SrcExp, DType, ExpInfo<SrcExp>::kDim>
-mirror(const Exp<SrcExp, DType, etype> &src) {
-  TypeCheckPass<ExpInfo<SrcExp>::kDim >= 2>
-      ::Error_Expression_Does_Not_Meet_Dimension_Req();
+template <typename SrcExp, typename DType, int etype>
+inline MirroringExp<SrcExp, DType, ExpInfo<SrcExp>::kDim> mirror(
+    const Exp<SrcExp, DType, etype> &src) {
+  TypeCheckPass<ExpInfo<SrcExp>::kDim >=
+                2>::Error_Expression_Does_Not_Meet_Dimension_Req();
   return MirroringExp<SrcExp, DType, ExpInfo<SrcExp>::kDim>(src.self());
 }
 //----------------------
 // Execution plan
 //----------------------
-template<typename SrcExp, typename DType, int srcdim>
+template <typename SrcExp, typename DType, int srcdim>
 struct Plan<MirroringExp<SrcExp, DType, srcdim>, DType> {
  public:
   explicit Plan(const MirroringExp<SrcExp, DType, srcdim> &e)

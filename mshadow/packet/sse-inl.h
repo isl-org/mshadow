@@ -13,7 +13,7 @@
 
 namespace mshadow {
 namespace packet {
-template<>
+template <>
 struct Packet<float, kSSE2> {
  public:
   /*! \brief number of float in vector */
@@ -42,13 +42,11 @@ struct Packet<float, kSSE2> {
     return *this;
   }
   // store data into dst
-  MSHADOW_CINLINE void Store(float* dst) const {
-    _mm_store_ps(dst, data_);
-  }
+  MSHADOW_CINLINE void Store(float* dst) const { _mm_store_ps(dst, data_); }
   // get the sum of all contents
   MSHADOW_CINLINE float Sum() const {
-    __m128 ans  = _mm_add_ps(data_, _mm_movehl_ps(data_, data_));
-    __m128 rst  = _mm_add_ss(ans, _mm_shuffle_ps(ans, ans, 1));
+    __m128 ans = _mm_add_ps(data_, _mm_movehl_ps(data_, data_));
+    __m128 rst = _mm_add_ss(ans, _mm_shuffle_ps(ans, ans, 1));
 #if defined(_MSC_VER) && (_MSC_VER <= 1500) && defined(_WIN64)
     return rst.m128_f32[0];
 #else
@@ -58,9 +56,8 @@ struct Packet<float, kSSE2> {
   }
 };
 
-
 /*! \brief vector real type for float */
-template<>
+template <>
 struct Packet<double, kSSE2> {
   /*! \brief number of float in vector */
   static constexpr index_t size = 2;
@@ -77,7 +74,8 @@ struct Packet<double, kSSE2> {
   MSHADOW_CINLINE static Packet<double, kSSE2> Load(const double* src) {
     return Packet<double, kSSE2>(_mm_load_pd(src));
   }
-  MSHADOW_CINLINE static Packet<double, kSSE2> LoadUnAligned(const double* src) {
+  MSHADOW_CINLINE static Packet<double, kSSE2> LoadUnAligned(
+      const double* src) {
     return Packet<double, kSSE2>(_mm_loadu_pd(src));
   }
   // fill it with value s
@@ -86,12 +84,10 @@ struct Packet<double, kSSE2> {
     return *this;
   }
   // store data into dst
-  MSHADOW_CINLINE void Store(double* dst) const {
-    _mm_store_pd(dst, data_);
-  }
+  MSHADOW_CINLINE void Store(double* dst) const { _mm_store_pd(dst, data_); }
   // get sum of all content
   inline double Sum(void) const {
-    __m128d tmp =  _mm_add_sd(data_, _mm_unpackhi_pd(data_, data_));
+    __m128d tmp = _mm_add_sd(data_, _mm_unpackhi_pd(data_, data_));
 #if defined(_MSC_VER) && (_MSC_VER <= 1500) && defined(_WIN64)
     return tmp.m128d_f64[0];
 #else
@@ -101,44 +97,43 @@ struct Packet<double, kSSE2> {
   }
 };
 
-MSHADOW_CINLINE Packet<float, kSSE2> operator+(const Packet<float, kSSE2>& lhs,
-                                                    const Packet<float, kSSE2>& rhs) {
+MSHADOW_CINLINE Packet<float, kSSE2> operator+(
+    const Packet<float, kSSE2>& lhs, const Packet<float, kSSE2>& rhs) {
   return Packet<float, kSSE2>(_mm_add_ps(lhs.data_, rhs.data_));
 }
 
-MSHADOW_CINLINE Packet<double, kSSE2> operator+(const Packet<double, kSSE2>& lhs,
-                                                     const Packet<double, kSSE2>& rhs) {
+MSHADOW_CINLINE Packet<double, kSSE2> operator+(
+    const Packet<double, kSSE2>& lhs, const Packet<double, kSSE2>& rhs) {
   return Packet<double, kSSE2>(_mm_add_pd(lhs.data_, rhs.data_));
 }
 
-MSHADOW_CINLINE Packet<float, kSSE2> operator-(const Packet<float, kSSE2>& lhs,
-                                                    const Packet<float, kSSE2>& rhs) {
+MSHADOW_CINLINE Packet<float, kSSE2> operator-(
+    const Packet<float, kSSE2>& lhs, const Packet<float, kSSE2>& rhs) {
   return Packet<float, kSSE2>(_mm_sub_ps(lhs.data_, rhs.data_));
 }
 
-MSHADOW_CINLINE Packet<double, kSSE2> operator-(const Packet<double, kSSE2>& lhs,
-                                                     const Packet<double, kSSE2>& rhs) {
+MSHADOW_CINLINE Packet<double, kSSE2> operator-(
+    const Packet<double, kSSE2>& lhs, const Packet<double, kSSE2>& rhs) {
   return Packet<double, kSSE2>(_mm_sub_pd(lhs.data_, rhs.data_));
 }
 
-MSHADOW_CINLINE Packet<float, kSSE2> operator*(const Packet<float, kSSE2>& lhs,
-                                                    const Packet<float, kSSE2>& rhs) {
+MSHADOW_CINLINE Packet<float, kSSE2> operator*(
+    const Packet<float, kSSE2>& lhs, const Packet<float, kSSE2>& rhs) {
   return Packet<float, kSSE2>(_mm_mul_ps(lhs.data_, rhs.data_));
 }
 
-MSHADOW_CINLINE Packet<double, kSSE2> operator*(const Packet<double, kSSE2>& lhs,
-                                                     const Packet<double, kSSE2>& rhs) {
+MSHADOW_CINLINE Packet<double, kSSE2> operator*(
+    const Packet<double, kSSE2>& lhs, const Packet<double, kSSE2>& rhs) {
   return Packet<double, kSSE2>(_mm_mul_pd(lhs.data_, rhs.data_));
 }
 
-
-MSHADOW_CINLINE Packet<float, kSSE2> operator/(const Packet<float, kSSE2>& lhs,
-                                                    const Packet<float, kSSE2>& rhs) {
+MSHADOW_CINLINE Packet<float, kSSE2> operator/(
+    const Packet<float, kSSE2>& lhs, const Packet<float, kSSE2>& rhs) {
   return Packet<float, kSSE2>(_mm_div_ps(lhs.data_, rhs.data_));
 }
 
-MSHADOW_CINLINE Packet<double, kSSE2> operator/(const Packet<double, kSSE2>& lhs,
-                                                     const Packet<double, kSSE2>& rhs) {
+MSHADOW_CINLINE Packet<double, kSSE2> operator/(
+    const Packet<double, kSSE2>& lhs, const Packet<double, kSSE2>& rhs) {
   return Packet<double, kSSE2>(_mm_div_pd(lhs.data_, rhs.data_));
 }
 

@@ -8,14 +8,14 @@
 #define MSHADOW_STREAM_GPU_INL_H_
 #include <memory>
 #include "./base.h"
-#include "./tensor.h"
 #include "./logging.h"
+#include "./tensor.h"
 
 namespace mshadow {
 #if MSHADOW_USE_CUDA == 1
 // Stream alocation
 // actual implementation of GPU stream in CUDA
-template<>
+template <>
 struct Stream<gpu> {
   /*! \brief handle state */
   enum HandleState {
@@ -26,14 +26,14 @@ struct Stream<gpu> {
   cudaStream_t stream_;
   /*! \brief cublas handle */
   cublasHandle_t blas_handle_;
-  /*! \brief cusolver handle */
-  #if MSHADOW_USE_CUSOLVER == 1
+/*! \brief cusolver handle */
+#if MSHADOW_USE_CUSOLVER == 1
   cusolverDnHandle_t solver_handle_;
-  #endif
-  /*! \brief cudnn handle */
-  #if MSHADOW_USE_CUDNN == 1
+#endif
+/*! \brief cudnn handle */
+#if MSHADOW_USE_CUDNN == 1
   cudnnHandle_t dnn_handle_;
-  #endif
+#endif
   /*! \brief cublas handle ownership */
   HandleState blas_handle_ownership_;
   /*! \brief cusolver handle ownership */
@@ -46,21 +46,22 @@ struct Stream<gpu> {
   int dev_id;
 
   Stream(void)
-    : stream_(0)
-      , blas_handle_(0)
+      : stream_(0),
+        blas_handle_(0)
 #if MSHADOW_USE_CUDNN == 1
-      , dnn_handle_(0)
+        ,
+        dnn_handle_(0)
 #endif
-      , blas_handle_ownership_(NoHandle)
-      , solver_handle_ownership_(NoHandle)
-      , dnn_handle_ownership_(NoHandle) {}
+        ,
+        blas_handle_ownership_(NoHandle),
+        solver_handle_ownership_(NoHandle),
+        dnn_handle_ownership_(NoHandle) {
+  }
   /*!
    * \brief wait for all the computation associated
    *  with this stream to complete
    */
-  inline void Wait(void) {
-    MSHADOW_CUDA_CALL(cudaStreamSynchronize(stream_));
-  }
+  inline void Wait(void) { MSHADOW_CUDA_CALL(cudaStreamSynchronize(stream_)); }
   /*!
    * \brief query whether the the stream is idle
    * \return true if the stream is idle and all the job have been completed
@@ -79,7 +80,8 @@ struct Stream<gpu> {
   inline static cudaStream_t GetStream(Stream<gpu> *stream) {
     if (stream == NULL) {
 #if MSHADOW_FORCE_STREAM
-      LOG(FATAL) << "Default GPU stream was used when MSHADOW_FORCE_STREAM was on";
+      LOG(FATAL)
+          << "Default GPU stream was used when MSHADOW_FORCE_STREAM was on";
 #endif
       return 0;
     } else {
@@ -95,7 +97,7 @@ struct Stream<gpu> {
       return 0;
     } else {
       CHECK_NE(stream->blas_handle_ownership_, NoHandle)
-        << "No handle exist in source stream";
+          << "No handle exist in source stream";
       return stream->blas_handle_;
     }
   }
@@ -121,7 +123,8 @@ struct Stream<gpu> {
     if (stream == NULL) {
       return 0;
     } else {
-      CHECK_NE(stream->solver_handle_ownership_, NoHandle) << "No handle exist in source stream";
+      CHECK_NE(stream->solver_handle_ownership_, NoHandle)
+          << "No handle exist in source stream";
       return stream->solver_handle_;
     }
   }
@@ -130,7 +133,8 @@ struct Stream<gpu> {
 #if MSHADOW_USE_CUSOLVER == 1
     if (solver_handle_ownership_ == OwnHandle) {
       cusolverStatus_t err = cusolverDnDestroy(solver_handle_);
-      CHECK_EQ(err, CUSOLVER_STATUS_SUCCESS) << "Destory cusolver handle failed";
+      CHECK_EQ(err, CUSOLVER_STATUS_SUCCESS)
+          << "Destory cusolver handle failed";
     }
 #endif
   }
@@ -150,7 +154,8 @@ struct Stream<gpu> {
     if (stream == NULL) {
       return 0;
     } else {
-      CHECK_NE(stream->dnn_handle_ownership_, NoHandle) << "No handle exist in source stream";
+      CHECK_NE(stream->dnn_handle_ownership_, NoHandle)
+          << "No handle exist in source stream";
       return stream->dnn_handle_;
     }
   }
@@ -178,7 +183,7 @@ struct Stream<gpu> {
 #endif
   }
 };
-template<>
+template <>
 inline void DeleteStream<gpu>(Stream<gpu> *stream) {
   if (stream) {
     MSHADOW_CUDA_CALL(cudaStreamDestroy(stream->stream_));
@@ -188,12 +193,13 @@ inline void DeleteStream<gpu>(Stream<gpu> *stream) {
     delete stream;
   }
 }
-template<>
+template <>
 inline Stream<gpu> *NewStream<gpu>(bool create_blas_handle,
-                                   bool create_dnn_handle,
-                                   int dev_id) {
+                                   bool create_dnn_handle, int dev_id) {
   // RAII on Cuda exception
-  struct StreamDeleter { void operator()(Stream<gpu> *ptr) const { DeleteStream<gpu>(ptr); } };
+  struct StreamDeleter {
+    void operator()(Stream<gpu> *ptr) const { DeleteStream<gpu>(ptr); }
+  };
   std::unique_ptr<Stream<gpu>, StreamDeleter> st(new Stream<gpu>());
   MSHADOW_CUDA_CALL(cudaStreamCreate(&st->stream_));
   if (create_blas_handle) {

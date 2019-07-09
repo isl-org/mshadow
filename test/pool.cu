@@ -1,11 +1,11 @@
+#include <cstring>
+#include "assert.h"
 #include "mshadow/tensor.h"
 #include "old/tensor.h"
-#include "assert.h"
-#include <cstring>
 
 using mshadow::index_t;
-template<typename T>
-void Print(T const & ist) {
+template <typename T>
+void Print(T const &ist) {
   for (int i = 0; i < ist.size(0); ++i) {
     for (int j = 0; j < ist.size(1); ++j) {
       printf("%.2f ", ist[i][j]);
@@ -14,7 +14,7 @@ void Print(T const & ist) {
   }
 }
 
-bool Check(mshadow::TensorContainer<mshadow::cpu, 2, float> &mct, \
+bool Check(mshadow::TensorContainer<mshadow::cpu, 2, float> &mct,
            Xmshadow::TensorContainer<Xmshadow::cpu, 2> &xct) {
   for (index_t i = 0; i < mct.size(0); ++i) {
     for (index_t j = 0; j < mct.size(1); ++j) {
@@ -24,13 +24,13 @@ bool Check(mshadow::TensorContainer<mshadow::cpu, 2, float> &mct, \
   return true;
 }
 
-template<typename xpua, typename xpub>
+template <typename xpua, typename xpub>
 void RunTask() {
   const int X = 6;
   const int K = 2;
   mshadow::TensorContainer<mshadow::cpu, 2, float> srcm(mshadow::Shape2(X, X));
   Xmshadow::TensorContainer<Xmshadow::cpu, 2> srcx(Xmshadow::Shape2(X, X));
-  
+
   mshadow::TensorContainer<xpua, 2, float> mct(mshadow::Shape2(X, X));
   Xmshadow::TensorContainer<xpub, 2> xct(Xmshadow::Shape2(X, X));
   for (int i = 0; i < X; ++i) {
@@ -41,14 +41,18 @@ void RunTask() {
   }
   mshadow::Copy(mct, srcm);
   Xmshadow::Copy(xct, srcx);
-  mshadow::TensorContainer<xpua, 2, float> pool_ct(mshadow::Shape2((X-K)/2+1, (X-K)/2+1));
-  Xmshadow::TensorContainer<xpub, 2> pool_xct(Xmshadow::Shape2((X-K)/2+1, (X-K)/2+1));
+  mshadow::TensorContainer<xpua, 2, float> pool_ct(
+      mshadow::Shape2((X - K) / 2 + 1, (X - K) / 2 + 1));
+  Xmshadow::TensorContainer<xpub, 2> pool_xct(
+      Xmshadow::Shape2((X - K) / 2 + 1, (X - K) / 2 + 1));
 
   pool_ct = mshadow::expr::pool<mshadow::red::maximum>(mct, K, K, K);
   pool_xct = Xmshadow::expr::pool<Xmshadow::red::maximum>(xct, K, K);
 
-  mshadow::TensorContainer<mshadow::cpu, 2, float> cpool_ct(mshadow::Shape2((X-K)/2+1, (X-K)/2+1));
-  Xmshadow::TensorContainer<Xmshadow::cpu, 2> cpool_xct(Xmshadow::Shape2((X-K)/2+1, (X-K)/2+1));
+  mshadow::TensorContainer<mshadow::cpu, 2, float> cpool_ct(
+      mshadow::Shape2((X - K) / 2 + 1, (X - K) / 2 + 1));
+  Xmshadow::TensorContainer<Xmshadow::cpu, 2> cpool_xct(
+      Xmshadow::Shape2((X - K) / 2 + 1, (X - K) / 2 + 1));
   mshadow::Copy(cpool_ct, pool_ct);
   Xmshadow::Copy(cpool_xct, pool_xct);
   if (Check(cpool_ct, cpool_xct)) {
@@ -56,7 +60,7 @@ void RunTask() {
   }
 }
 
-int main(int argc, char** argv) {
+int main(int argc, char **argv) {
   if (argc < 2) {
     printf("Usage: dev\n");
     exit(-1);

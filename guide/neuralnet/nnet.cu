@@ -1,6 +1,6 @@
 // this implements a simple two layer neural net
-#include <vector>
 #include <cmath>
+#include <vector>
 // header file to use mshadow
 #include "mshadow/tensor.h"
 // helper function to load mnist dataset
@@ -11,17 +11,19 @@ using namespace mshadow;
 using namespace mshadow::expr;
 
 // define sigmoid operation
-struct sigmoid{
+struct sigmoid {
   MSHADOW_XINLINE static real_t Map(real_t a) {
-    return  1.0f/(1.0f+expf(-a));
+    return 1.0f / (1.0f + expf(-a));
   }
 };
 
-/*! \brief interface for nnet, interfacd allows use to use GPU/CPU implementation in a unified way */
-class INNet{
+/*! \brief interface for nnet, interfacd allows use to use GPU/CPU
+ * implementation in a unified way */
+class INNet {
  public:
-  virtual void Forward(const Tensor<cpu, 2, real_t>& inbatch, Tensor<cpu, 2, real_t> &oubatch) = 0;
-  virtual void Backprop(const Tensor<cpu, 2, real_t>& gradout) = 0;
+  virtual void Forward(const Tensor<cpu, 2, real_t> &inbatch,
+                       Tensor<cpu, 2, real_t> &oubatch) = 0;
+  virtual void Backprop(const Tensor<cpu, 2, real_t> &gradout) = 0;
   virtual void Update(void) = 0;
   virtual ~INNet() {}
 };
@@ -30,7 +32,7 @@ class INNet{
  * \brief simple two layer neural net
  *        this implementation is device invariant
  */
-template<typename xpu>
+template <typename xpu>
 class NNet : public INNet {
  public:
   // initialize the network
@@ -55,18 +57,23 @@ class NNet : public INNet {
     nhiddenbak.Resize(nhidden.shape_);
     nout.Resize(Shape2(batch_size, num_out));
     // setup bias
-    hbias.Resize(Shape1(num_hidden)); g_hbias.Resize(hbias.shape_);
-    obias.Resize(Shape1(num_out)); g_obias.Resize(obias.shape_);
-    hbias = 0.0f; obias = 0.0f;
+    hbias.Resize(Shape1(num_hidden));
+    g_hbias.Resize(hbias.shape_);
+    obias.Resize(Shape1(num_out));
+    g_obias.Resize(obias.shape_);
+    hbias = 0.0f;
+    obias = 0.0f;
     // setup weights
-    Wi2h.Resize(Shape2(num_in, num_hidden));  g_Wi2h.Resize(Wi2h.shape_);
-    Wh2o.Resize(Shape2(num_hidden, num_out)); g_Wh2o.Resize(Wh2o.shape_);
+    Wi2h.Resize(Shape2(num_in, num_hidden));
+    g_Wi2h.Resize(Wi2h.shape_);
+    Wh2o.Resize(Shape2(num_hidden, num_out));
+    g_Wh2o.Resize(Wh2o.shape_);
     rnd.SampleGaussian(&Wi2h, 0, 0.01f);
     rnd.SampleGaussian(&Wh2o, 0, 0.01f);
   }
   virtual ~NNet() {}
   // forward propagation
-  virtual void Forward(const Tensor<cpu, 2, real_t>& inbatch,
+  virtual void Forward(const Tensor<cpu, 2, real_t> &inbatch,
                        Tensor<cpu, 2, real_t> &oubatch) {
     // size is same conventsion as numpy
     index_t batch_size = inbatch.size(0);
@@ -74,7 +81,7 @@ class NNet : public INNet {
     Copy(ninput, inbatch, ninput.stream_);
     // first layer, fullc
     nhidden = dot(ninput, Wi2h);
-    nhidden+= repmat(hbias, batch_size);
+    nhidden += repmat(hbias, batch_size);
     // activation, sigmloid, backup activation in nhidden
     nhidden = F<sigmoid>(nhidden);
     Copy(nhiddenbak, nhidden, nhiddenbak.stream_);
@@ -87,19 +94,19 @@ class NNet : public INNet {
     Copy(oubatch, nout, nout.stream_);
   }
   // back propagation
-  virtual void Backprop(const Tensor<cpu, 2, real_t>& gradout) {
+  virtual void Backprop(const Tensor<cpu, 2, real_t> &gradout) {
     // copy gradient to output layer
     Copy(nout, gradout, nout.stream_);
     // calc grad of layer 2
     g_obias = sum_rows(nout);
-    g_Wh2o  = dot(nhiddenbak.T(), nout);
+    g_Wh2o = dot(nhiddenbak.T(), nout);
     // backprop to layer 1
     nhiddenbak = dot(nout, Wh2o.T());
     // calculate gradient of sigmoid layer
-    nhidden = nhidden * (1.0f-nhidden) * nhiddenbak;
+    nhidden = nhidden * (1.0f - nhidden) * nhiddenbak;
     // calc grad of layer 1
     g_hbias = sum_rows(nhidden);
-    g_Wi2h  = dot(ninput.T(), nhidden);
+    g_Wi2h = dot(ninput.T(), nhidden);
   }
   // update weight
   virtual void Update(void) {
@@ -110,9 +117,10 @@ class NNet : public INNet {
     Wi2h -= eta * (wd * Wi2h + g_Wi2h);
     Wh2o -= eta * (wd * Wh2o + g_Wh2o);
     // no regularization for bias
-    hbias-= eta * g_hbias;
-    obias-= eta * g_obias;
+    hbias -= eta * g_hbias;
+    obias -= eta * g_obias;
   }
+
  private:
   // random seed generator
   Random<xpu, real_t> rnd;
@@ -126,15 +134,16 @@ class NNet : public INNet {
 // helper function to get the max inde
 inline int MaxIndex(Tensor<cpu, 1, real_t> pred) {
   int maxidx = 0;
-  for(index_t i = 1; i < pred.size(0); ++i) {
-    if(pred[i] > pred[maxidx]) maxidx = (int)i;
+  for (index_t i = 1; i < pred.size(0); ++i) {
+    if (pred[i] > pred[maxidx]) maxidx = (int)i;
   }
   return maxidx;
 }
 
 int main(int argc, char *argv[]) {
-  if(argc < 2) {
-    printf("Usage: cpu or gpu\n"); return 0;
+  if (argc < 2) {
+    printf("Usage: cpu or gpu\n");
+    return 0;
   }
   srand(0);
 
@@ -160,19 +169,21 @@ int main(int argc, char *argv[]) {
   // label
   std::vector<int> ytrain, ytest;
   // data
-  TensorContainer<cpu,2> xtrain, xtest;
-  LoadMNIST("train-images-idx3-ubyte", "train-labels-idx1-ubyte", ytrain, xtrain, true);
-  LoadMNIST("t10k-images-idx3-ubyte", "t10k-labels-idx1-ubyte", ytest, xtest, false);
+  TensorContainer<cpu, 2> xtrain, xtest;
+  LoadMNIST("train-images-idx3-ubyte", "train-labels-idx1-ubyte", ytrain,
+            xtrain, true);
+  LoadMNIST("t10k-images-idx3-ubyte", "t10k-labels-idx1-ubyte", ytest, xtest,
+            false);
 
   int num_iter = 20;
 
-  for (int i = 0; i < num_iter; ++ i) {
+  for (int i = 0; i < num_iter; ++i) {
     // training
     for (index_t j = 0; j + batch_size <= xtrain.size(0); j += batch_size) {
       net->Forward(xtrain.Slice(j, j + batch_size), pred);
       // set gradient into pred
-      for (int k = 0; k < batch_size; ++ k) {
-        pred[k][ ytrain[k+j] ] -= 1.0f;
+      for (int k = 0; k < batch_size; ++k) {
+        pred[k][ytrain[k + j]] -= 1.0f;
       }
       // scale gradient by batchs zie
       pred *= 1.0f / batch_size;
@@ -185,12 +196,11 @@ int main(int argc, char *argv[]) {
     long nerr = 0;
     for (index_t j = 0; j + batch_size <= xtest.size(0); j += batch_size) {
       net->Forward(xtest.Slice(j, j + batch_size), pred);
-      for (int k = 0; k < batch_size; ++ k) {
-        nerr += MaxIndex(pred[k]) != ytest[j+k];
-
+      for (int k = 0; k < batch_size; ++k) {
+        nerr += MaxIndex(pred[k]) != ytest[j + k];
       }
     }
-    printf("round %d: test-err=%f\n", i, (float)nerr/xtest.size(0));
+    printf("round %d: test-err=%f\n", i, (float)nerr / xtest.size(0));
   }
   delete net;
   if (!strcmp(argv[1], "gpu")) {

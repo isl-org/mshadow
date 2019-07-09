@@ -7,9 +7,9 @@
 #ifndef MSHADOW_PS_THREAD_UTIL_H_  // NOLINT(*)
 #define MSHADOW_PS_THREAD_UTIL_H_  // NOLINT(*)
 
-#include <utility>
-#include <queue>
 #include <map>
+#include <queue>
+#include <utility>
 #include "./thread.h"
 namespace mshadow {
 namespace utils {
@@ -18,12 +18,11 @@ namespace utils {
  * in the future, it will support priority scheduling
  * \tparam DType the content of the queue
  */
-template<typename DType>
+template <typename DType>
 class ThreadPQueue {
  public:
   // constructor
-  ThreadPQueue() : use_fifo_(false) {
-  }
+  ThreadPQueue() : use_fifo_(false) {}
   /*! \brief intitialize the queue, must call this before use */
   inline void Init(bool use_fifo = false) {
     use_fifo_ = use_fifo;
@@ -75,11 +74,13 @@ class ThreadPQueue {
     lock_.Lock();
     if (use_fifo_) {
       if (fqueue_.size() == 0) {
-        lock_.Unlock(); return false;
+        lock_.Unlock();
+        return false;
       }
     } else {
       if (pqueue_.size() == 0) {
-        lock_.Unlock(); return false;
+        lock_.Unlock();
+        return false;
       }
     }
     if (use_fifo_) {
@@ -100,8 +101,7 @@ class ThreadPQueue {
   struct Entry {
     DType data;
     int priority;
-    Entry(const DType &data, int priority)
-        : data(data), priority(priority) {}
+    Entry(const DType &data, int priority) : data(data), priority(priority) {}
     inline bool operator<(const Entry &b) const {
       return priority < b.priority;
     }
@@ -119,15 +119,13 @@ class ThreadPQueue {
 };
 
 // naive implementation of threadsafe map
-template<typename TValue>
+template <typename TValue>
 class ThreadSafeMap {
  public:
-  inline void Init(void) {
-    lock_.Init();
-  }
+  inline void Init(void) { lock_.Init(); }
   inline void Destroy(void) {
-    for (typename std::map<int, TValue*>::iterator
-             it = map_.begin(); it != map_.end(); ++it) {
+    for (typename std::map<int, TValue *>::iterator it = map_.begin();
+         it != map_.end(); ++it) {
       delete it->second;
     }
     lock_.Destroy();
@@ -135,8 +133,7 @@ class ThreadSafeMap {
   inline TValue *Get(int key) {
     TValue *ret;
     lock_.Lock();
-    typename std::map<int, TValue*>::const_iterator
-        it = map_.find(key);
+    typename std::map<int, TValue *>::const_iterator it = map_.find(key);
     if (it == map_.end() || it->first != key) {
       ret = NULL;
     } else {
@@ -161,7 +158,7 @@ class ThreadSafeMap {
  private:
   // lock for accessing the queue
   utils::Mutex lock_;
-  std::map<int, TValue*> map_;
+  std::map<int, TValue *> map_;
 };
 
 }  // namespace utils

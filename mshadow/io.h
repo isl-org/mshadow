@@ -35,66 +35,72 @@ class IStream {
 };
 }  // namespace utils
 /*!
- * \brief CPU/GPU: save a tensor by binary format, for GPU version, a temp Tensor<cpu,dim> storage will be allocated
- * \param fo output binary stream
+ * \brief CPU/GPU: save a tensor by binary format, for GPU version, a temp
+ * Tensor<cpu,dim> storage will be allocated \param fo output binary stream
  * \param src source data file
  * \tparam dim dimension of tensor
  * \tparam DType type of element in tensor
- * \tparam TStream type of stream, need to support Read, Write, one example is utils::IStream.
+ * \tparam TStream type of stream, need to support Read, Write, one example is
+ * utils::IStream.
  */
-template<int dim, typename DType, typename TStream>
-inline void SaveBinary(TStream &fo, const Tensor<cpu, dim, DType> &src);  // NOLINT(*)
+template <int dim, typename DType, typename TStream>
+inline void SaveBinary(TStream &fo,
+                       const Tensor<cpu, dim, DType> &src);  // NOLINT(*)
 /*!
- * \brief CPU/GPU: save a tensor by binary format, for GPU version, a temp Tensor<cpu,dim> storage will be allocated
- * \param fo output binary stream
+ * \brief CPU/GPU: save a tensor by binary format, for GPU version, a temp
+ * Tensor<cpu,dim> storage will be allocated \param fo output binary stream
  * \param src source data file
  * \tparam dim dimension of tensor
  * \tparam DType type of element in tensor
- * \tparam TStream type of stream, need to support Read, Write, one example is utils::IStream.
+ * \tparam TStream type of stream, need to support Read, Write, one example is
+ * utils::IStream.
  */
-template<int dim, typename DType, typename TStream>
-inline void SaveBinary(TStream &fo, const Tensor<gpu, dim, DType> &src); // NOLINT(*)
+template <int dim, typename DType, typename TStream>
+inline void SaveBinary(TStream &fo,
+                       const Tensor<gpu, dim, DType> &src);  // NOLINT(*)
 /*!
- * \brief CPU/GPU: load a tensor by binary format, for GPU version, a temp Tensor<cpu,dim> storage will be allocated
- *       if pre_alloc is true , then space in dst is preallocated, and must have same shape of the tensor loaded
- *       if pre_alloc is false, then dst originally does not have space allocated, LoadBinary will allocate space for dst
- * \param fi output binary stream
- * \param dst destination file
- * \param pre_alloc whether space is pre-allocated, if false, space allocation will happen
- * \tparam dim dimension of tensor
- * \tparam DType type of element in tensor
- * \tparam TStream type of stream, need to support Read, Write, one example is utils::IStream.
+ * \brief CPU/GPU: load a tensor by binary format, for GPU version, a temp
+ * Tensor<cpu,dim> storage will be allocated if pre_alloc is true , then space
+ * in dst is preallocated, and must have same shape of the tensor loaded if
+ * pre_alloc is false, then dst originally does not have space allocated,
+ * LoadBinary will allocate space for dst \param fi output binary stream \param
+ * dst destination file \param pre_alloc whether space is pre-allocated, if
+ * false, space allocation will happen \tparam dim dimension of tensor \tparam
+ * DType type of element in tensor \tparam TStream type of stream, need to
+ * support Read, Write, one example is utils::IStream.
  */
-template<int dim, typename DType, typename TStream>
+template <int dim, typename DType, typename TStream>
 inline void LoadBinary(TStream &fi,  // NOLINT(*)
                        Tensor<cpu, dim, DType> *dst, bool pre_alloc);
 /*!
- * \brief CPU/GPU: load a tensor by binary format, for GPU version, a temp Tensor<cpu,dim> storage will be allocated
- *       if pre_alloc is true , then space in dst is preallocated, and must have same shape of the tensor loaded
- *       if pre_alloc is false, then dst originally does not have space allocated, LoadBinary will allocate space for dst
- * \param fi output binary stream
- * \param dst destination file
- * \param pre_alloc whether space is pre-allocated, if false, space allocation will happen
- * \tparam dim dimension of tensor
- * \tparam DType type of element in tensor
- * \tparam TStream type of stream, need to support Read, Write, one example is utils::IStream.
+ * \brief CPU/GPU: load a tensor by binary format, for GPU version, a temp
+ * Tensor<cpu,dim> storage will be allocated if pre_alloc is true , then space
+ * in dst is preallocated, and must have same shape of the tensor loaded if
+ * pre_alloc is false, then dst originally does not have space allocated,
+ * LoadBinary will allocate space for dst \param fi output binary stream \param
+ * dst destination file \param pre_alloc whether space is pre-allocated, if
+ * false, space allocation will happen \tparam dim dimension of tensor \tparam
+ * DType type of element in tensor \tparam TStream type of stream, need to
+ * support Read, Write, one example is utils::IStream.
  */
 
-template<int dim, typename DType, typename TStream>
-inline void LoadBinary(TStream &fi, // NOLINT(*)
+template <int dim, typename DType, typename TStream>
+inline void LoadBinary(TStream &fi,  // NOLINT(*)
                        Tensor<gpu, dim, DType> *dst, bool pre_alloc);
 
 // implementations
-template<int dim, typename DType, typename TStream>
-inline void SaveBinary(TStream &fo, const Tensor<cpu, dim, DType> &src_) { // NOLINT(*)
+template <int dim, typename DType, typename TStream>
+inline void SaveBinary(TStream &fo,
+                       const Tensor<cpu, dim, DType> &src_) {  // NOLINT(*)
   fo.Write(&src_.shape_, sizeof(src_.shape_));
   Tensor<cpu, 2, DType> src = src_.FlatTo2D();
   for (index_t i = 0; i < src.size(0); ++i) {
     fo.Write(src[i].dptr_, sizeof(DType) * src.size(1));
   }
 }
-template<int dim, typename DType, typename TStream>
-inline void SaveBinary(TStream &fo, const Tensor<gpu, dim, DType> &src) { // NOLINT(*)
+template <int dim, typename DType, typename TStream>
+inline void SaveBinary(TStream &fo,
+                       const Tensor<gpu, dim, DType> &src) {  // NOLINT(*)
   // copy to CPU, then save
   Tensor<cpu, dim, DType> tmp(src.shape_);
   AllocSpace(&tmp);
@@ -103,31 +109,36 @@ inline void SaveBinary(TStream &fo, const Tensor<gpu, dim, DType> &src) { // NOL
   SaveBinary(fo, tmp);
   FreeSpace(&tmp);
 }
-template<int dim, typename DType, typename TStream>
-inline void LoadBinary(TStream &fi, // NOLINT(*)
+template <int dim, typename DType, typename TStream>
+inline void LoadBinary(TStream &fi,  // NOLINT(*)
                        Tensor<cpu, dim, DType> *dst_, bool pre_alloc) {
   Shape<dim> shape;
   CHECK_NE(fi.Read(&shape, sizeof(shape)), 0) << "mshadow::LoadBinary";
   if (pre_alloc) {
-    CHECK_EQ(shape, dst_->shape_) << "LoadBinary, shape do not match pre-allocated shape";
+    CHECK_EQ(shape, dst_->shape_)
+        << "LoadBinary, shape do not match pre-allocated shape";
   } else {
-    dst_->shape_ = shape; AllocSpace(dst_);
+    dst_->shape_ = shape;
+    AllocSpace(dst_);
   }
   Tensor<cpu, 2, DType> dst = dst_->FlatTo2D();
   if (dst.size(0) == 0) return;
   for (index_t i = 0; i < dst.size(0); ++i) {
-    CHECK_NE(fi.Read(dst[i].dptr_, sizeof(DType) * dst.size(1)), 0) << "mshadow::LoadBinary";
+    CHECK_NE(fi.Read(dst[i].dptr_, sizeof(DType) * dst.size(1)), 0)
+        << "mshadow::LoadBinary";
   }
 }
-template<int dim, typename DType, typename TStream>
-inline void LoadBinary(TStream &fi, // NOLINT(*)
+template <int dim, typename DType, typename TStream>
+inline void LoadBinary(TStream &fi,  // NOLINT(*)
                        Tensor<gpu, dim, DType> *dst, bool pre_alloc) {
   Tensor<cpu, dim, DType> tmp;
   LoadBinary(fi, &tmp, false);
   if (pre_alloc) {
-    CHECK_EQ(tmp.shape, dst->shape_) << "LoadBinary, shape do not match pre-allocated shape";
+    CHECK_EQ(tmp.shape, dst->shape_)
+        << "LoadBinary, shape do not match pre-allocated shape";
   } else {
-    dst->shape = tmp.shape; AllocSpace(dst);
+    dst->shape = tmp.shape;
+    AllocSpace(dst);
   }
   Stream<gpu> stream;
   Copy(*dst, tmp, &stream);

@@ -6,20 +6,21 @@
  */
 #ifndef MSHADOW_TENSOR_CONTAINER_H_
 #define MSHADOW_TENSOR_CONTAINER_H_
-#include "./tensor.h"
 #include "./io.h"
+#include "./tensor.h"
 
 namespace mshadow {
 /*!
  * \brief tensor container that does memory allocation and resize like STL,
  *        use it to save the lines of FreeSpace in class.
- *        Do not abuse it, efficiency can come from pre-allocation and no re-allocation
+ *        Do not abuse it, efficiency can come from pre-allocation and no
+ * re-allocation
  *
  * \tparam Device which device the tensor is on
  * \tparam dimension dimension of the tensor
  */
-template<typename Device, int dimension, typename DType = default_real_t>
-class TensorContainer: public Tensor<Device, dimension, DType> {
+template <typename Device, int dimension, typename DType = default_real_t>
+class TensorContainer : public Tensor<Device, dimension, DType> {
  public:
   /*!
    * \brief constructor
@@ -57,8 +58,7 @@ class TensorContainer: public Tensor<Device, dimension, DType> {
    * \brief copy constructor
    * \param src source value
    */
-  TensorContainer
-  (const TensorContainer<Device, dimension, DType> &src)
+  TensorContainer(const TensorContainer<Device, dimension, DType> &src)
       : pad_(src.pad_) {
     this->dptr_ = data_.dptr_ = NULL;
     this->shape_[0] = 0;
@@ -71,9 +71,7 @@ class TensorContainer: public Tensor<Device, dimension, DType> {
       mshadow::Copy(*this, src, this->stream_);
     }
   }
-  ~TensorContainer(void) MSHADOW_THROW_EXCEPTION {
-    this->Release();
-  }
+  ~TensorContainer(void) MSHADOW_THROW_EXCEPTION { this->Release(); }
   /*!
    * \brief resize the container to given shape, content is NOT preserved
    * \param shape target shape
@@ -92,34 +90,32 @@ class TensorContainer: public Tensor<Device, dimension, DType> {
     }
   }
   /*!
-   * \brief resize the container to given shape, and initialize, content is NOT preserved
-   * \param shape target shape
-   * \param initv initialization value
+   * \brief resize the container to given shape, and initialize, content is NOT
+   * preserved \param shape target shape \param initv initialization value
    */
   inline void Resize(const Shape<dimension> &shape, DType initv) {
     this->Resize(shape);
     (*this) = initv;
   }
   /*! \brief set whether padding is allowed in tensor */
-  inline void set_pad(bool pad) {
-    this->pad_ = pad;
-  }
+  inline void set_pad(bool pad) { this->pad_ = pad; }
   /*!
    * \brief save by binary format
    * \param fo output binary stream
-   * \tparam TStream type of stream, need to support Read, Write, one example is utils::IStream.
+   * \tparam TStream type of stream, need to support Read, Write, one example is
+   * utils::IStream.
    */
-  template<typename TStream>
-  inline void SaveBinary(TStream &fo) const { // NOLINT(*)
+  template <typename TStream>
+  inline void SaveBinary(TStream &fo) const {  // NOLINT(*)
     mshadow::SaveBinary(fo, *this);
   }
   /*!
-   * \brief load by binary format, a temp Tensor<cpu,dim> storage will be allocated
-   * \param fi input binary stream
-   * \tparam TStream type of stream, need to support Read, Write, one example is utils::IStream.
+   * \brief load by binary format, a temp Tensor<cpu,dim> storage will be
+   * allocated \param fi input binary stream \tparam TStream type of stream,
+   * need to support Read, Write, one example is utils::IStream.
    */
-  template<typename TStream>
-  inline void LoadBinary(TStream &fi) { // NOLINT(*)
+  template <typename TStream>
+  inline void LoadBinary(TStream &fi) {  // NOLINT(*)
     Tensor<cpu, dimension, DType> tmp;
     mshadow::LoadBinary(fi, &tmp, false);
     this->Resize(tmp.shape_);
@@ -132,8 +128,8 @@ class TensorContainer: public Tensor<Device, dimension, DType> {
    * \param src source value
    * \return reference of self
    */
-  inline TensorContainer &operator=
-  (const TensorContainer<Device, dimension, DType> &src) {
+  inline TensorContainer &operator=(
+      const TensorContainer<Device, dimension, DType> &src) {
     this->pad_ = src.pad_;
     this->stream_ = src.stream_;
     if (src.dptr_ != NULL) {
@@ -147,21 +143,21 @@ class TensorContainer: public Tensor<Device, dimension, DType> {
     return this->__assign(s);
   }
   /*!\brief functions to fit expression template */
-  template<typename E>
-  inline Tensor<Device, dimension, DType> &
-  operator=(const expr::Exp<E, DType, expr::type::kMapper> &exp) {
+  template <typename E>
+  inline Tensor<Device, dimension, DType> &operator=(
+      const expr::Exp<E, DType, expr::type::kMapper> &exp) {
     return this->__assign(exp);
   }
   /*!\brief functions to fit expression template */
-  template<typename E>
-  inline Tensor<Device, dimension, DType> &
-  operator=(const expr::Exp<E, DType, expr::type::kChainer> &exp) {
+  template <typename E>
+  inline Tensor<Device, dimension, DType> &operator=(
+      const expr::Exp<E, DType, expr::type::kChainer> &exp) {
     return this->__assign(exp);
   }
   /*!\brief functions to fit expression template */
-  template<typename E>
-  inline Tensor<Device, dimension, DType> &
-  operator=(const expr::Exp<E, DType, expr::type::kComplex> &exp) {
+  template <typename E>
+  inline Tensor<Device, dimension, DType> &operator=(
+      const expr::Exp<E, DType, expr::type::kComplex> &exp) {
     return this->__assign(exp);
   }
   /*!
@@ -191,7 +187,7 @@ class TensorContainer: public Tensor<Device, dimension, DType> {
   /*! \brief the shape of data_ is actually current data space */
   Tensor<Device, 2, DType> data_;
 
-  inline void AllocByShape(const Shape<dimension>& shape) {
+  inline void AllocByShape(const Shape<dimension> &shape) {
     if (data_.dptr_ != NULL) this->Release();
     data_.shape_ = shape.FlatTo2D();
     mshadow::AllocSpace(&data_, pad_);
