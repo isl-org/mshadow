@@ -90,8 +90,12 @@ if(USE_CUDA)
 	add_definitions(-DMSHADOW_USE_CUDA=1)
 	add_definitions(-DMSHADOW_FORCE_STREAM)
 	include_directories(SYSTEM ${CUDA_INCLUDE_DIRS})
-    list(APPEND mshadow_LINKER_LIBS ${CUDA_CUDART_LIBRARY}
-                              ${CUDA_curand_LIBRARY} ${CUDA_CUBLAS_LIBRARIES})
+    list(APPEND mshadow_LINKER_LIBS
+        ${CUDA_CUDART_LIBRARY}
+        ${CUDA_curand_LIBRARY}
+        ${CUDA_CUBLAS_LIBRARIES}
+        ${CUDA_cusolver_LIBRARY}
+    )
 else()
   add_definitions(-DMSHADOW_USE_CUDA=0)
 endif()

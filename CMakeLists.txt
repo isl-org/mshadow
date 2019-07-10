@@ -48,10 +48,6 @@ target_link_libraries(unit_test
     googletest
     blas # TODO: modify mshadow's CMake to include this
     ${mshadow_LINKER_LIBS}
-    ${CUDA_CUDART_LIBRARY}
-    ${CUDA_curand_LIBRARY}
-    ${CUDA_CUBLAS_LIBRARIES}
-    ${CUDA_cusolver_LIBRARY}
 )
 
 # `make check-style` errors if styling is not compliant
