@@ -49,9 +49,9 @@ ifndef USE_F16C
         endif
     endif
     # if OS is Windows, check if your processor and compiler support F16C architecture.
-    # One way to check if processor supports it is to download the tool 
+    # One way to check if processor supports it is to download the tool
     # https://docs.microsoft.com/en-us/sysinternals/downloads/coreinfo.
-    # If coreinfo -c shows F16C and compiler supports it, 
+    # If coreinfo -c shows F16C and compiler supports it,
     # then you can set USE_F16C=1 explicitly to leverage that capability"
 endif
 
@@ -123,41 +123,6 @@ else ifeq ($(USE_BLAS), blas)
 else ifeq ($(USE_BLAS), apple)
 	MSHADOW_CFLAGS += -I/System/Library/Frameworks/Accelerate.framework/Versions/Current/Frameworks/vecLib.framework/Versions/Current/Headers/
 	MSHADOW_LDFLAGS += -framework Accelerate
-endif
-
-ifeq ($(PS_PATH), NONE)
-	PS_PATH = ..
-endif
-ifeq ($(PS_THIRD_PATH), NONE)
-	PS_THIRD_PATH = $(PS_PATH)/third_party
-endif
-
-ifndef RABIT_PATH
-	RABIT_PATH = rabit
-endif
-
-ifeq ($(RABIT_PATH), NONE)
-	RABIT_PATH = rabit
-endif
-
-ifeq ($(USE_RABIT_PS),1)
-	MSHADOW_CFLAGS += -I$(RABIT_PATH)/include
-	MSHADOW_LDFLAGS += -L$(RABIT_PATH)/lib -lrabit_base
-	MSHADOW_CFLAGS += -DMSHADOW_RABIT_PS=1
-else
-	MSHADOW_CFLAGS += -DMSHADOW_RABIT_PS=0
-endif
-
-ifeq ($(USE_DIST_PS),1)
-MSHADOW_CFLAGS += -DMSHADOW_DIST_PS=1 -std=c++11 \
-	-I$(PS_PATH)/src -I$(PS_THIRD_PATH)/include
-PS_LIB = $(addprefix $(PS_PATH)/build/, libps.a libps_main.a) \
-	$(addprefix $(PS_THIRD_PATH)/lib/, libgflags.a libzmq.a libprotobuf.a \
-	libglog.a libz.a libsnappy.a)
-	# -L$(PS_THIRD_PATH)/lib -lgflags -lzmq -lprotobuf -lglog -lz -lsnappy
-MSHADOW_NVCCFLAGS += --std=c++11
-else
-	MSHADOW_CFLAGS+= -DMSHADOW_DIST_PS=0
 endif
 
 # MSHADOW_USE_PASCAL=1 used to enable true-fp16 gemms.  Now, mshadow
