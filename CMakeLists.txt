@@ -46,7 +46,6 @@ target_include_directories(unit_test PUBLIC
 )
 target_link_libraries(unit_test
     googletest
-    blas # TODO: modify mshadow's CMake to include this
     ${mshadow_LINKER_LIBS}
 )
 
