@@ -46,7 +46,7 @@ target_include_directories(unit_test PUBLIC
 )
 target_link_libraries(unit_test
     googletest
-    ${mshadow_LINKER_LIBS}
+    ${MSHADOW_LIBRARIES}
 )
 
 # `make check-style` errors if styling is not compliant

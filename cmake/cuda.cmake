@@ -259,7 +259,7 @@ endif()
 set(HAVE_CUDA TRUE)
 message(STATUS "CUDA detected: " ${CUDA_VERSION})
 include_directories(SYSTEM ${CUDA_INCLUDE_DIRS})
-list(APPEND mshadow_LINKER_LIBS ${CUDA_CUDART_LIBRARY}
+list(APPEND MSHADOW_LIBRARIES ${CUDA_CUDART_LIBRARY}
                               ${CUDA_curand_LIBRARY} ${CUDA_CUBLAS_LIBRARIES})
 
 # Known NVIDIA GPU achitectures mshadow can be compiled for.
@@ -282,7 +282,7 @@ if(USE_CUDNN)
   if(HAVE_CUDNN)
     add_definitions(-DUSE_CUDNN)
     include_directories(SYSTEM ${CUDNN_INCLUDE})
-    list(APPEND mshadow_LINKER_LIBS ${CUDNN_LIBRARY})
+    list(APPEND MSHADOW_LIBRARIES ${CUDNN_LIBRARY})
   endif()
 endif()
 
